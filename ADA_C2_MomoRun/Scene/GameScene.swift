@@ -17,7 +17,9 @@ final class GameScene: SKScene {
         for y in 0 ..< 4  {
             for x in 0 ..< 4 {
                 let sprite = SKSpriteNode(imageNamed: "floor")
-                let screenPosition = convertworl
+                let screenPosition = convertWorldToScreen(Vector(x: x, y: y))
+                sprite.position = CGPoint(x: screenPosition.x, y: screenPosition.y)
+                addChild(sprite)
             }
         }
     }
