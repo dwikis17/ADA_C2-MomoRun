@@ -11,6 +11,14 @@ import SpriteKit
 
 final class GameScene: SKScene {
     override func didMove(to view: SKView) {
-        size = view.frame..sizeter
+        size = view.frame.size
+        scaleMode = .aspectFill
+        
+        for y in 0 ..< 4  {
+            for x in 0 ..< 4 {
+                let sprite = SKSpriteNode(imageNamed: "floor")
+                let screenPosition = convertworl
+            }
+        }
     }
 }
