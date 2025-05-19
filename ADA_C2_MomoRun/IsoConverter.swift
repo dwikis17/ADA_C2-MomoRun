@@ -13,14 +13,13 @@ struct Vector {
     let y: Int
     
     static func +(lhs: Vector, rhs: Vector) -> Vector {
-        Vector(x: lhs.x + lhs.x , y: lhs.y + lhs.y)
+        Vector(x: lhs.x + rhs.x , y: lhs.y + rhs.y)
     }
     
     static func *(scalar: Int, vector: Vector) -> Vector {
-        Vector(x: scalar * vector.x, y: scalar + vector.y )
+        Vector(x: scalar * vector.x, y: scalar * vector.y )
     }
 
-    
 }
 
 extension Vector: Equatable { }
