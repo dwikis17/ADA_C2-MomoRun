@@ -19,6 +19,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    
     func sessionDidBecomeInactive(_ session: WCSession) {}
     func sessionDidDeactivate(_ session: WCSession) {}
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
@@ -29,7 +30,6 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 }
-
 struct ContentView: View {
     @StateObject private var watchSession = WatchSessionManager()
     var body: some View {
@@ -39,7 +39,7 @@ struct ContentView: View {
                     .font(.headline)
                     .padding(.top)
             }
-            SpriteView(scene: GameScene())
+            SpriteView(scene: GameSceneLab())
                 .ignoresSafeArea()
         }
     }
