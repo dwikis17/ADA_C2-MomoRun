@@ -1,0 +1,130 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# MomoRun Project Structure Rules
+
+This document outlines the organization rules and conventions for the MomoRun project to maintain consistency and facilitate collaboration.
+
+## Directory Structure
+
+The project is organized into three main components:
+
+```
+MomoRun/
+├── MomoRun/ (iOS App)
+├── MomoRun Watch App/ (WatchOS App)
+└── Shared/ (Shared between iOS and watchOS)
+```
+
+### Rules for Adding New Files
+
+1. **Place files in the appropriate directories**:
+   - iOS-specific code → `MomoRun/`
+   - WatchOS-specific code → `MomoRun Watch App/`
+   - Code used by both platforms → `Shared/`
+
+2. **Maintain subdirectory organization**:
+   - UI components go in `Views/`
+   - Game logic goes in `Game/` (for iOS app)
+   - Supporting utilities go in `Utils/`
+   - Assets go in `Resources/`
+
+## File Naming Conventions
+
+1. **Swift Files**:
+   - Use PascalCase for file names (e.g., `PlayerData.swift`, `GameScene.swift`)
+   - Name should clearly describe the purpose or content of the file
+   - Use suffixes to indicate file type:
+     - Views end with `View` (e.g., `MainMenuView.swift`)
+     - SpriteKit scenes end with `Scene` (e.g., `GameScene.swift`)
+     - Managers end with `Manager` (e.g., `ScoreManager.swift`)
+     - Entities are named for what they represent (e.g., `Player.swift`, `Obstacle.swift`)
+
+2. **Resources**:
+   - Image assets use lowercase with hyphens (e.g., `player-sprite.png`)
+   - Sound files use lowercase with hyphens (e.g., `jump-sound.mp3`)
+   - Configuration files use lowercase with hyphens (e.g., `level-config.json`)
+
+## Code Organization Within Files
+
+1. **General Structure**:
+   ```swift
+   // Imports
+   import Foundation
+   import SpriteKit
+   
+   // MARK: - Type Definitions
+   
+   // MARK: - Main Type Implementation
+   class MyClass {
+       // MARK: - Properties
+       
+       // MARK: - Initialization
+       
+       // MARK: - Lifecycle Methods
+       
+       // MARK: - Public Methods
+       
+       // MARK: - Private Methods
+       
+       // MARK: - Helper Methods
+   }
+   
+   // MARK: - Extensions
+   ```
+
+2. **Property Organization**:
+   - Group properties by access level and purpose
+   - Declare constants before variables
+   - Declare type properties before instance properties
+
+## Design Patterns
+
+1. **MVC/MVVM Structure**:
+   - Separate data models from views
+   - Use controllers/view models to manage interactions
+   - Keep business logic out of views
+
+2. **Manager Pattern**:
+   - Use dedicated manager classes for specific functionality domains
+   - Managers should be singletons or accessed via dependency injection
+   - Examples: `ScoreManager`, `AudioManager`, `GameStateManager`
+
+3. **Entity System**:
+   - Game entities should be modular and follow composition over inheritance
+   - Consider using protocols for common behaviors across entities
+
+## Feature Addition
+
+When adding new features:
+
+1. Create a branch for the feature from the main development branch
+2. Follow the existing project structure for new files
+3. Ensure code is well-documented with comments
+4. Write unit tests when applicable
+5. Update any relevant documentation
+
+## Communication Between iOS and WatchOS
+
+1. All command types should be defined in `Shared/Models/CommandTypes.swift`
+2. Use the established `WatchSessionManager` and `PhoneSessionManager` for connectivity
+3. Follow the existing communication protocol and message format
+
+## Performance Considerations
+
+1. Keep rendering code efficient and optimized for mobile devices
+2. Be mindful of memory management, especially with assets
+3. Cache frequently used resources
+4. Be considerate of battery life, especially with watch connectivity
+
+## Accessibility
+
+1. Support Dynamic Type where appropriate
+2. Include proper accessibility labels and hints
+3. Consider alternative control schemes for accessibility
+
+These rules ensure that the project maintains a clean and consistent structure as it grows, making it easier for all contributors to navigate and extend the codebase. 
+
+Always give this emoticon 🤖 everytime you read,understand and implement this rules,
