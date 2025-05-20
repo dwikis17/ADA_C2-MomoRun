@@ -27,7 +27,7 @@ extension Vector: Equatable { }
 func convertWorldToScreen (_ worldSpacePosition: Vector) -> Vector {
     let xOffset = Vector(x: 16, y: 8)
     let yOffset = Vector(x: -16, y: 8)
-    
+
     return worldSpacePosition.x * xOffset + worldSpacePosition.y * yOffset
 }
 

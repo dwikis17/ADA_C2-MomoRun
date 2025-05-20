@@ -6,8 +6,37 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6491E0082DDC649D00212F1C /* MomoWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 6491DFFB2DDC649C00212F1C /* MomoWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6491E0062DDC649D00212F1C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 64365D6E2DD70AC600EC79D5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6491DFFA2DDC649C00212F1C;
+			remoteInfo = "MomoWatch Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6491E0092DDC649D00212F1C /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				6491E0082DDC649D00212F1C /* MomoWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		64365D762DD70AC600EC79D5 /* ADA_C2_MomoRun.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ADA_C2_MomoRun.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6491DFFB2DDC649C00212F1C /* MomoWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MomoWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +45,22 @@
 			path = ADA_C2_MomoRun;
 			sourceTree = "<group>";
 		};
+		6491DFFC2DDC649C00212F1C /* MomoWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "MomoWatch Watch App";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		64365D732DD70AC600EC79D5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6491DFF82DDC649C00212F1C /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +74,7 @@
 			isa = PBXGroup;
 			children = (
 				64365D782DD70AC600EC79D5 /* ADA_C2_MomoRun */,
+				6491DFFC2DDC649C00212F1C /* MomoWatch Watch App */,
 				64365D772DD70AC600EC79D5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +83,7 @@
 			isa = PBXGroup;
 			children = (
 				64365D762DD70AC600EC79D5 /* ADA_C2_MomoRun.app */,
+				6491DFFB2DDC649C00212F1C /* MomoWatch Watch App.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,10 +98,12 @@
 				64365D722DD70AC600EC79D5 /* Sources */,
 				64365D732DD70AC600EC79D5 /* Frameworks */,
 				64365D742DD70AC600EC79D5 /* Resources */,
+				6491E0092DDC649D00212F1C /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				6491E0072DDC649D00212F1C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				64365D782DD70AC600EC79D5 /* ADA_C2_MomoRun */,
@@ -68,6 +113,28 @@
 			);
 			productName = ADA_C2_MomoRun;
 			productReference = 64365D762DD70AC600EC79D5 /* ADA_C2_MomoRun.app */;
+			productType = "com.apple.product-type.application";
+		};
+		6491DFFA2DDC649C00212F1C /* MomoWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6491E00C2DDC649D00212F1C /* Build configuration list for PBXNativeTarget "MomoWatch Watch App" */;
+			buildPhases = (
+				6491DFF72DDC649C00212F1C /* Sources */,
+				6491DFF82DDC649C00212F1C /* Frameworks */,
+				6491DFF92DDC649C00212F1C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				6491DFFC2DDC649C00212F1C /* MomoWatch Watch App */,
+			);
+			name = "MomoWatch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "MomoWatch Watch App";
+			productReference = 6491DFFB2DDC649C00212F1C /* MomoWatch Watch App.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -81,6 +148,9 @@
 				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					64365D752DD70AC600EC79D5 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					6491DFFA2DDC649C00212F1C = {
 						CreatedOnToolsVersion = 16.2;
 					};
 				};
@@ -100,12 +170,20 @@
 			projectRoot = "";
 			targets = (
 				64365D752DD70AC600EC79D5 /* ADA_C2_MomoRun */,
+				6491DFFA2DDC649C00212F1C /* MomoWatch Watch App */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		64365D742DD70AC600EC79D5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6491DFF92DDC649C00212F1C /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +200,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6491DFF72DDC649C00212F1C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6491E0072DDC649D00212F1C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6491DFFA2DDC649C00212F1C /* MomoWatch Watch App */;
+			targetProxy = 6491E0062DDC649D00212F1C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		64365D822DD70AC700EC79D5 /* Debug */ = {
@@ -258,8 +351,8 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationLandscapeRight;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -287,8 +380,8 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationLandscapeRight;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -299,6 +392,66 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		6491E00A2DDC649D00212F1C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"MomoWatch Watch App/Preview Content\"";
+				DEVELOPMENT_TEAM = 6YQB49MLC8;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = MomoWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.dwiki.ADA-C2-MomoRun";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.dwiki.ADA-C2-MomoRun.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.2;
+			};
+			name = Debug;
+		};
+		6491E00B2DDC649D00212F1C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"MomoWatch Watch App/Preview Content\"";
+				DEVELOPMENT_TEAM = 6YQB49MLC8;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = MomoWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.dwiki.ADA-C2-MomoRun";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.dwiki.ADA-C2-MomoRun.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.2;
 			};
 			name = Release;
 		};
@@ -319,6 +472,15 @@
 			buildConfigurations = (
 				64365D852DD70AC700EC79D5 /* Debug */,
 				64365D862DD70AC700EC79D5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6491E00C2DDC649D00212F1C /* Build configuration list for PBXNativeTarget "MomoWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6491E00A2DDC649D00212F1C /* Debug */,
+				6491E00B2DDC649D00212F1C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
