@@ -7,7 +7,7 @@
 
 import Foundation
 import SpriteKit
-
+import WatchConnectivity
 final class GameSceneLab: SKScene {
     struct Tile {
         let sprite: SKSpriteNode
@@ -16,7 +16,7 @@ final class GameSceneLab: SKScene {
     }
     private var floorTiles: [Tile] = []
     private let tileWidth: CGFloat = 32 // Adjust based on your tile size
-    private let moveSpeed: Double = 10 // tiles per second
+    private let moveSpeed: Double = 5 // tiles per second
     private var lastUpdateTime: TimeInterval = 0
     private let floorLength = 18
     private let floorWidth = 3
@@ -24,7 +24,7 @@ final class GameSceneLab: SKScene {
     private var playerY: Int = 1 // Start at row 2
     private var obstacles: [SKSpriteNode] = []
     private var obstacleSpawnTimer: TimeInterval = 0
-    private let obstacleSpawnInterval: TimeInterval = 1.2 // seconds
+    private let obstacleSpawnInterval: TimeInterval = 1 // seconds
     private let obstacleStartX: Int = 20
     private var isGameOver: Bool = false
     private var restartLabel: SKLabelNode?
@@ -79,11 +79,11 @@ final class GameSceneLab: SKScene {
         obstacle.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(Double(screenVector.y)))
         obstacle.zPosition = CGFloat(convertWorldToZPosition(position))
         obstacle.anchorPoint = CGPoint(x: 0.5, y: y == 0 ? 0.5 : (y == 2 ? 0.0 : 0.3))
-        // Store worldX, y, z in userData for movement
         obstacle.userData = ["worldX": Double(obstacleStartX), "y": y, "z": z]
         addChild(obstacle)
         obstacles.append(obstacle)
     }
+
     private func moveRight() {
         guard playerY > 0 else { return }
         playerY -= 1
@@ -136,8 +136,14 @@ final class GameSceneLab: SKScene {
         let y = CGFloat(base.y) * (1 - t) + CGFloat(next.y) * t
         return CGPoint(x: x, y: y)
     }
+
+    private func sendMessageToWatch(_ message: String) {
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(["info": message], replyHandler: nil)
+        }
+    }
     
-    private func restartGame() {
+     func restartGame() {
         // Remove all obstacles
         for obstacle in obstacles { obstacle.removeFromParent() }
         obstacles.removeAll()
@@ -221,7 +227,7 @@ final class GameSceneLab: SKScene {
         }
         // If collision, stop the game and tint player red
         if didCollide {
-            print("Game Over")
+            sendMessageToWatch("Game Over")
             isGameOver = true
             player?.color = .red
             player?.colorBlendFactor = 0.7
