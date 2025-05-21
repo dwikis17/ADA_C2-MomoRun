@@ -22,34 +22,50 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
 struct ContentView: View {
     @StateObject private var watchSession = WatchSessionManager()
+    @StateObject private var sensorModel = SensorModel()
     var body: some View {
         VStack(spacing: 20) {
-            HStack(spacing: 30) {
-                Button(action: {
-                    sendDirection("left")
-                }) {
-                    Image(systemName: "arrow.left.circle.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundStyle(.tint)
-                }
-                .buttonStyle(.plain)
-                Button(action: {
-                    sendDirection("right")
-                }) {
-                    Image(systemName: "arrow.right.circle.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundStyle(.tint)
-                }
-                .buttonStyle(.plain)
+//            HStack(spacing: 30) {
+//                Button(action: {
+//                    sendDirection("left")
+//                }) {
+//                    Image(systemName: "arrow.left.circle.fill")
+//                        .resizable()
+//                        .frame(width: 40, height: 40)
+//                        .foregroundStyle(.tint)
+//                }
+//                .buttonStyle(.plain)
+//                Button(action: {
+//                    sendDirection("right")
+//                }) {
+//                    Image(systemName: "arrow.right.circle.fill")
+//                        .resizable()
+//                        .frame(width: 40, height: 40)
+//                        .foregroundStyle(.tint)
+//                }
+//                .buttonStyle(.plain)
+//            }
+            Button(action: { if sensorModel.isFetching {
+                sensorModel.stopFetchingSensorData()
+            } else {
+                sensorModel.startFetchingSensorData()
             }
+            }) {
+                Text(sensorModel.isFetching ? "Stop Fetching" : "Start Fetching")
+            }
+            .tint(sensorModel.isFetching ? .red : .white)
+            
             Text(watchSession.status)
                 .font(.footnote)
                 .foregroundColor(.gray)
                 .padding(.top, 8)
         }
         .padding()
+        .onChange(of: sensorModel.directionX) {
+            if !sensorModel.directionX.isEmpty {
+                sendDirection(sensorModel.directionX)
+            }
+        }
     }
 
     private func sendDirection(_ direction: String) {
