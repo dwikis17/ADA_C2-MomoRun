@@ -34,26 +34,46 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
 }
+
 struct ContentView: View {
     @StateObject private var watchSession = WatchSessionManager()
-    private var gameScene = GameSceneLab()
+    // Read the flag from UserDefaults
+    @AppStorage("hasSetCalorieTarget") private var hasSetCalorieTarget: Bool = false
+    // State variable to control presentation
+    @State private var showCalorieSetup = false
+
     var body: some View {
-        VStack {
-            if !watchSession.receivedMessage.isEmpty {
-                Text("From Watch: \(watchSession.receivedMessage)")
-                    .font(.headline)
-                    .padding(.top)
-            }
-            SpriteView(scene: gameScene)
-                .ignoresSafeArea()
-        }
-        .onAppear {
-            watchSession.onDirection = { direction in
-                if direction == "left" {
-                    gameScene.moveLeftFromWatch()
-                } else if direction == "right" {
-                    gameScene.moveRightFromWatch()
+        // Check if calorie target has been set
+        if showCalorieSetup {
+            // Show the setup view if it hasn't been set or state variable is true
+            CalorieTargetSetupView(showSetup: $showCalorieSetup)
+        } else {
+            // Show the main content (your existing VStack with SpriteView)
+            VStack {
+                if !watchSession.receivedMessage.isEmpty {
+                    Text("From Watch: \(watchSession.receivedMessage)")
+                        .font(.headline)
+                        .padding(.top)
                 }
+                GeometryReader { geometry in
+                    SpriteView(scene: MainMenuScene(size: geometry.size))
+                        .ignoresSafeArea()
+                }
+            }
+            // .onAppear check is now here to set showCalorieSetup state
+            .onAppear {
+                 // Only show setup if the flag is false
+                 if !hasSetCalorieTarget {
+                     showCalorieSetup = true
+                 }
+                 // The watch session handler is currently commented out, it should be moved to the GameScene or a manager
+                 // watchSession.onDirection = { direction in
+                 //     if direction == "left" {
+                 //         gameScene.moveLeftFromWatch()
+                 //     } else if direction == "right" {
+                 //         gameScene.moveRightFromWatch()
+                 //     }
+                 // }
             }
         }
     }
