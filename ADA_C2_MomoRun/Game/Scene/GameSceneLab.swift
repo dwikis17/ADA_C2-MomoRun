@@ -16,11 +16,68 @@ final class GameSceneLab: SKScene {
     }
     private var floorTiles: [Tile] = []
     private let tileWidth: CGFloat = 32 // Adjust based on your tile size
-    private let moveSpeed: Double = 15 // tiles per second
+    private let moveSpeed: Double = 5 // tiles per second
     private var lastUpdateTime: TimeInterval = 0
     private let floorLength = 18
     private let floorWidth = 3
+    private var player: SKSpriteNode?
+    private var playerY: Int = 1 // Start at row 2
     
+
+    private func createPlayer() {
+        let playerNode = SKSpriteNode(imageNamed: "player_0") // Start with the first frame
+        let position = Vector(x: -3, y: playerY, z: 3)
+        let screenVector = convertWorldToScreen(position)
+        playerNode.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
+        playerNode.zPosition = CGFloat(convertWorldToZPosition(position))
+        playerNode.setScale(0.5)
+        addChild(playerNode)
+        self.player = playerNode
+
+        // Animation setup
+        let playerFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+        let runAnimation = SKAction.animate(with: playerFrames, timePerFrame: 0.1, resize: false, restore: true)
+        let repeatRun = SKAction.repeatForever(runAnimation)
+        playerNode.run(repeatRun, withKey: "run")
+    }
+
+    private func createArrows() {
+        let leftArrow = SKSpriteNode(imageNamed: "arrow")
+        leftArrow.name = "arrow_left"
+        leftArrow.setScale(0.009)
+        leftArrow.position = CGPoint(x: 60, y: 60)
+        leftArrow.zPosition = 1000
+        leftArrow.zRotation = .pi  // Rotate 180 degrees to point left
+        addChild(leftArrow)
+
+        let rightArrow = SKSpriteNode(imageNamed: "arrow")
+        rightArrow.name = "arrow_right"
+        rightArrow.setScale(0.009)
+        rightArrow.position = CGPoint(x: 140, y: 60)
+        rightArrow.zPosition = 1000
+        addChild(rightArrow)
+    }
+
+    private func moveLeft() {
+        guard playerY < floorWidth - 1 else { return }
+        playerY += 1
+        updatePlayerPosition()
+    }
+
+    private func moveRight() {
+        guard playerY > 0 else { return }
+        playerY -= 1
+        updatePlayerPosition()
+    }
+
+    private func updatePlayerPosition() {
+        guard let playerNode = player else { return }
+        let position = Vector(x: -3, y: playerY, z: 3)
+        let screenVector = convertWorldToScreen(position)
+        playerNode.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
+        playerNode.zPosition = CGFloat(convertWorldToZPosition(position))
+    }
+
     override func didMove(to view: SKView) {
         size = view.frame.size
         scaleMode = .aspectFill
@@ -46,6 +103,8 @@ final class GameSceneLab: SKScene {
                 floorTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
             }
         }
+        createPlayer()
+        // createArrows()
     }
     
     // Helper for smooth isometric rendering (uses Double for x)
@@ -91,5 +150,26 @@ final class GameSceneLab: SKScene {
             tile.sprite.position = pos
             tile.sprite.zPosition = -Double(pos.y)
         }
+    }
+
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        guard let touch = touches.first else { return }
+        let location = touch.location(in: self)
+        let nodes = self.nodes(at: location)
+        for node in nodes {
+            if node.name == "arrow_left" {
+                moveLeft()
+            } else if node.name == "arrow_right" {
+                moveRight()
+            }
+        }
+    }
+
+    // Add public methods for watch control
+    @objc func moveLeftFromWatch() {
+        moveLeft()
+    }
+    @objc func moveRightFromWatch() {
+        moveRight()
     }
 }
