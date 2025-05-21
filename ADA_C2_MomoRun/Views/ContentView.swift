@@ -8,6 +8,7 @@
 import SwiftUI
 import SpriteKit
 import WatchConnectivity
+import UIKit
 
 class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var receivedMessage: String = ""
@@ -55,6 +56,7 @@ struct ContentView: View {
                     gameScene.moveRightFromWatch()
                 }
             }
+            UIApplication.shared.isIdleTimerDisabled = true
         }
     }
 }

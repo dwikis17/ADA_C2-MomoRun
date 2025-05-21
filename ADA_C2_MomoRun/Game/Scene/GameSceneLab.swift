@@ -22,6 +22,12 @@ final class GameSceneLab: SKScene {
     private let floorWidth = 3
     private var player: SKSpriteNode?
     private var playerY: Int = 1 // Start at row 2
+    private var obstacles: [SKSpriteNode] = []
+    private var obstacleSpawnTimer: TimeInterval = 0
+    private let obstacleSpawnInterval: TimeInterval = 1.2 // seconds
+    private let obstacleStartX: Int = 10
+    private var isGameOver: Bool = false
+    private var restartLabel: SKLabelNode?
     
 
     private func createPlayer() {
@@ -64,6 +70,20 @@ final class GameSceneLab: SKScene {
         updatePlayerPosition()
     }
 
+    private func createObstacles() {
+        let y = 1 // Changed from 2 to 1 to place rock in middle lane
+        let z = Int(3)
+        let obstacle = SKSpriteNode(imageNamed: "rock")
+        let position = Vector(x: obstacleStartX, y: y, z: z)
+        let screenVector = convertWorldToScreen(position)
+        obstacle.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(Double(screenVector.y)))
+        obstacle.zPosition = CGFloat(convertWorldToZPosition(position))
+        obstacle.anchorPoint = CGPoint(x: 0.5, y: y == 0 ? 0.5 : (y == 2 ? 0.0 : 0.3))
+        // Store worldX, y, z in userData for movement
+        obstacle.userData = ["worldX": Double(obstacleStartX), "y": y, "z": z]
+        addChild(obstacle)
+        obstacles.append(obstacle)
+    }
     private func moveRight() {
         guard playerY > 0 else { return }
         playerY -= 1
@@ -117,7 +137,24 @@ final class GameSceneLab: SKScene {
         return CGPoint(x: x, y: y)
     }
     
+    private func restartGame() {
+        // Remove all obstacles
+        for obstacle in obstacles { obstacle.removeFromParent() }
+        obstacles.removeAll()
+        // Reset player
+        playerY = 1
+        player?.removeFromParent()
+        createPlayer()
+        // Reset timers and state
+        obstacleSpawnTimer = 0
+        isGameOver = false
+        // Remove restart label if present
+        restartLabel?.removeFromParent()
+        restartLabel = nil
+    }
+
     override func update(_ currentTime: TimeInterval) {
+        guard !isGameOver else { return }
         guard lastUpdateTime != 0 else {
             lastUpdateTime = currentTime
             return
@@ -150,9 +187,64 @@ final class GameSceneLab: SKScene {
             tile.sprite.position = pos
             tile.sprite.zPosition = -Double(pos.y)
         }
+
+        // --- Obstacle logic ---
+        var didCollide = false
+        for obstacle in obstacles {
+            guard let userData = obstacle.userData,
+                  let y = userData["y"] as? Int,
+                  let z = userData["z"] as? Int,
+                  let worldX = userData["worldX"] as? Double else { continue }
+            let newWorldX = worldX - moveSpeed * deltaTime
+            obstacle.userData?["worldX"] = newWorldX
+            let pos = convertWorldToScreenSmooth(newWorldX, y)
+            obstacle.position = pos
+            let zPos = convertWorldToZPosition(Vector(x: Int(newWorldX), y: y, z: z))
+            obstacle.zPosition = CGFloat(zPos)
+    
+            // Collision check: player is always at (-3, playerY, 3)
+            if Int(round(newWorldX)) == -3 && y == playerY && z == 3 {
+                didCollide = true
+            }
+        }
+        // Remove obstacles that are off screen
+        obstacles.removeAll { obstacle in
+            if let worldX = obstacle.userData?["worldX"] as? Double {
+                return worldX < -13
+            }
+            return false
+        }
+        // Spawn new obstacles at random intervals
+        obstacleSpawnTimer += deltaTime
+        if obstacleSpawnTimer >= obstacleSpawnInterval {
+            obstacleSpawnTimer = 0
+            createObstacles()
+        }
+        // If collision, stop the game and tint player red
+        if didCollide {
+            print("Game Over")
+            isGameOver = true
+            player?.color = .red
+            player?.colorBlendFactor = 0.7
+            // Show restart label
+            if restartLabel == nil {
+                let label = SKLabelNode(text: "Tap to Restart")
+                label.fontName = "AvenirNext-Bold"
+                label.fontSize = 40
+                label.fontColor = .white
+                label.position = CGPoint(x: size.width/2, y: size.height/2)
+                label.zPosition = 2000
+                addChild(label)
+                restartLabel = label
+            }
+        }
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        if isGameOver {
+            restartGame()
+            return
+        }
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
         let nodes = self.nodes(at: location)
