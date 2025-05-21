@@ -16,7 +16,7 @@ final class GameSceneLab: SKScene {
     }
     private var floorTiles: [Tile] = []
     private let tileWidth: CGFloat = 32 // Adjust based on your tile size
-    private let moveSpeed: Double = 5 // tiles per second
+    private let moveSpeed: Double = 10 // tiles per second
     private var lastUpdateTime: TimeInterval = 0
     private let floorLength = 18
     private let floorWidth = 3
@@ -25,7 +25,7 @@ final class GameSceneLab: SKScene {
     private var obstacles: [SKSpriteNode] = []
     private var obstacleSpawnTimer: TimeInterval = 0
     private let obstacleSpawnInterval: TimeInterval = 1.2 // seconds
-    private let obstacleStartX: Int = 10
+    private let obstacleStartX: Int = 20
     private var isGameOver: Bool = false
     private var restartLabel: SKLabelNode?
     
@@ -71,7 +71,7 @@ final class GameSceneLab: SKScene {
     }
 
     private func createObstacles() {
-        let y = 1 // Changed from 2 to 1 to place rock in middle lane
+        let y = [0, 1, 2].randomElement() ?? 0
         let z = Int(3)
         let obstacle = SKSpriteNode(imageNamed: "rock")
         let position = Vector(x: obstacleStartX, y: y, z: z)
@@ -141,10 +141,9 @@ final class GameSceneLab: SKScene {
         // Remove all obstacles
         for obstacle in obstacles { obstacle.removeFromParent() }
         obstacles.removeAll()
-        // Reset player
+        // Reset player position
         playerY = 1
-        player?.removeFromParent()
-        createPlayer()
+        updatePlayerPosition()
         // Reset timers and state
         obstacleSpawnTimer = 0
         isGameOver = false
