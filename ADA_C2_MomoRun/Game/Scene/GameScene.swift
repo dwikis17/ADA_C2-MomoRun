@@ -149,28 +149,30 @@ final class GameScene: SKScene {
                 
                 // Reposition tile
                 tile.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
+                tile.zPosition = -Double(screenVector.y)
             }
         }
         
         // Move obstacles
-        for obstacle in obstacles {
-            obstacle.position.x -= movementX
-            obstacle.position.y -= movementY
+        // for obstacle in obstacles {
+        //     obstacle.position.x -= movementX
+        //     obstacle.position.y -= movementY
+        //     obstacle.zPosition = -Double(obstacle.position.y)
             
-            // Check for collision with character
-            if obstacle.frame.intersects(character.frame) {
-                print("Collision detecteds!")
-            }
+        //     // Check for collision with character
+        //     if obstacle.frame.intersects(character.frame) {
+        //         print("Collision detecteds!")
+        //     }
             
-            // Remove obstacle if it's off screen
-            if obstacle.position.x < -obstacle.size.width {
-                obstacle.removeFromParent()
-                if let index = obstacles.firstIndex(of: obstacle) {
-                    obstacles.remove(at: index)
-                }
-                // Spawn new obstacle
-                spawnObstacle()
-            }
-        }
+        //     // Remove obstacle if it's off screen
+        //     if obstacle.position.x < -obstacle.size.width {
+        //         obstacle.removeFromParent()
+        //         if let index = obstacles.firstIndex(of: obstacle) {
+        //             obstacles.remove(at: index)
+        //         }
+        //         // Spawn new obstacle
+        //         spawnObstacle()
+        //     }
+        // }
     }
 }

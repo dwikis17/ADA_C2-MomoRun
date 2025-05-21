@@ -22,39 +22,47 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
 struct ContentView: View {
     @StateObject private var watchSession = WatchSessionManager()
-    @State private var tapIndex: Int = 1
     var body: some View {
-        VStack {
-            Button(action: {
-                if WCSession.default.isReachable {
-                    WCSession.default.sendMessage(["info": "Tap #\(tapIndex)"], replyHandler: nil, errorHandler: { error in
-                        DispatchQueue.main.async {
-                            watchSession.status = "Failed: \(error.localizedDescription)"
-                        }
-                    })
-                    watchSession.status = "Sent!"
-                    tapIndex += 1
-                } else {
-                    watchSession.status = "Not reachable"
-                }
-            }) {
-                VStack {
-                    Image(systemName: "paperplane.fill")
+        VStack(spacing: 20) {
+            HStack(spacing: 30) {
+                Button(action: {
+                    sendDirection("left")
+                }) {
+                    Image(systemName: "arrow.left.circle.fill")
                         .resizable()
                         .frame(width: 40, height: 40)
                         .foregroundStyle(.tint)
-                    Text("Tap #\(tapIndex)")
-                        .font(.headline)
-                        .padding(.top, 4)
                 }
+                .buttonStyle(.plain)
+                Button(action: {
+                    sendDirection("right")
+                }) {
+                    Image(systemName: "arrow.right.circle.fill")
+                        .resizable()
+                        .frame(width: 40, height: 40)
+                        .foregroundStyle(.tint)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
             Text(watchSession.status)
                 .font(.footnote)
                 .foregroundColor(.gray)
                 .padding(.top, 8)
         }
         .padding()
+    }
+
+    private func sendDirection(_ direction: String) {
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(["direction": direction], replyHandler: nil, errorHandler: { error in
+                DispatchQueue.main.async {
+                    watchSession.status = "Failed: \(error.localizedDescription)"
+                }
+            })
+            watchSession.status = "Sent: \(direction.capitalized)"
+        } else {
+            watchSession.status = "Not reachable"
+        }
     }
 }
 
