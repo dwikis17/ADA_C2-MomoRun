@@ -7,9 +7,11 @@
 
 import SwiftUI
 import WatchConnectivity
+import WatchKit
 
 class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var status: String = ""
+    @Published var gameOver: Bool = false
     override init() {
         super.init()
         if WCSession.isSupported() {
@@ -18,43 +20,55 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
+        DispatchQueue.main.async {
+            if let info = message["info"] as? String {
+                self.status = info
+                if info == "Game Over" {
+                    self.gameOver = true
+                }
+            }
+        }
+    }
 }
 
 struct ContentView: View {
     @StateObject private var watchSession = WatchSessionManager()
     @StateObject private var sensorModel = SensorModel()
+    @State private var didPlayHaptic = false
+    
     var body: some View {
         VStack(spacing: 20) {
-//            HStack(spacing: 30) {
-//                Button(action: {
-//                    sendDirection("left")
-//                }) {
-//                    Image(systemName: "arrow.left.circle.fill")
-//                        .resizable()
-//                        .frame(width: 40, height: 40)
-//                        .foregroundStyle(.tint)
-//                }
-//                .buttonStyle(.plain)
-//                Button(action: {
-//                    sendDirection("right")
-//                }) {
-//                    Image(systemName: "arrow.right.circle.fill")
-//                        .resizable()
-//                        .frame(width: 40, height: 40)
-//                        .foregroundStyle(.tint)
-//                }
-//                .buttonStyle(.plain)
-//            }
-            Button(action: { if sensorModel.isFetching {
-                sensorModel.stopFetchingSensorData()
+            if watchSession.gameOver {
+                Text("Game Over!")
+                    .font(.title)
+                    .foregroundColor(.red)
+                    .padding()
+                Button("Restart") {
+                    watchSession.gameOver = false
+                    watchSession.status = ""
+                    didPlayHaptic = false
+                    sensorModel.startFetchingSensorData()
+                    if WCSession.default.isReachable {
+                        WCSession.default.sendMessage(["restart": true], replyHandler: nil)
+                    }
+                }
+                .font(.headline)
+                .padding()
+                .background(Color.green.opacity(0.8))
+                .cornerRadius(10)
+                .foregroundColor(.white)
             } else {
-                sensorModel.startFetchingSensorData()
+                Button(action: { if sensorModel.isFetching {
+                    sensorModel.stopFetchingSensorData()
+                } else {
+                    sensorModel.startFetchingSensorData()
+                }
+                }) {
+                    Text(sensorModel.isFetching ? "Stop Fetching" : "Start Fetching")
+                }
+                .tint(sensorModel.isFetching ? .red : .white)
             }
-            }) {
-                Text(sensorModel.isFetching ? "Stop Fetching" : "Start Fetching")
-            }
-            .tint(sensorModel.isFetching ? .red : .white)
-            
             Text(watchSession.status)
                 .font(.footnote)
                 .foregroundColor(.gray)
@@ -64,6 +78,15 @@ struct ContentView: View {
         .onChange(of: sensorModel.directionX) {
             if !sensorModel.directionX.isEmpty {
                 sendDirection(sensorModel.directionX)
+            }
+        }
+        .onChange(of: watchSession.gameOver) { newValue in
+            if newValue {
+                if !didPlayHaptic {
+                    WKInterfaceDevice.current().play(.failure)
+                    didPlayHaptic = true
+                }
+                sensorModel.stopFetchingSensorData()
             }
         }
     }

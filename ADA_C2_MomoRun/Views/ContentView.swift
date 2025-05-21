@@ -13,6 +13,7 @@ import UIKit
 class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var receivedMessage: String = ""
     var onDirection: ((String) -> Void)?
+    var onRestart: (() -> Void)?
     override init() {
         super.init()
         if WCSession.isSupported() {
@@ -22,6 +23,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     }
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
     
+
     func sessionDidBecomeInactive(_ session: WCSession) {}
     func sessionDidDeactivate(_ session: WCSession) {}
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
@@ -31,6 +33,9 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             }
             if let direction = message["direction"] as? String {
                 self.onDirection?(direction)
+            }
+            if let restart = message["restart"] as? Bool, restart {
+                self.onRestart?()
             }
         }
     }
@@ -55,6 +60,9 @@ struct ContentView: View {
                 } else if direction == "right" {
                     gameScene.moveRightFromWatch()
                 }
+            }
+            watchSession.onRestart = {
+                gameScene.restartGame()
             }
             UIApplication.shared.isIdleTimerDisabled = true
         }
