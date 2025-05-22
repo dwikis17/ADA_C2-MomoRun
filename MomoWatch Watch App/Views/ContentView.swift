@@ -36,6 +36,7 @@ struct ContentView: View {
     @StateObject private var watchSession = WatchSessionManager()
     @StateObject private var sensorModel = SensorModel()
     @State private var didPlayHaptic = false
+    @State private var gameStarted = false
     
     var body: some View {
         VStack(spacing: 20) {
@@ -58,17 +59,43 @@ struct ContentView: View {
                 .background(Color.green.opacity(0.8))
                 .cornerRadius(10)
                 .foregroundColor(.white)
+            } else if !gameStarted {
+                // Start Game button when game hasn't started yet
+                Text("MomoRun")
+                    .font(.title3)
+                    .padding(.bottom, 5)
+                
+                Button("Start Game") {
+                    if WCSession.default.isReachable {
+                        WCSession.default.sendMessage(["start": true], replyHandler: nil)
+                        gameStarted = true
+                        sensorModel.startFetchingSensorData()
+                    }
+                }
+                .font(.headline)
+                .padding()
+                .background(Color.blue.opacity(0.8))
+                .cornerRadius(10)
+                .foregroundColor(.white)
             } else {
+                // Motion controls section (only shown when game is started)
                 Button(action: { if sensorModel.isFetching {
                     sensorModel.stopFetchingSensorData()
                 } else {
                     sensorModel.startFetchingSensorData()
                 }
                 }) {
-                    Text(sensorModel.isFetching ? "Stop Fetching" : "Start Fetching")
+                    Text(sensorModel.isFetching ? "Stop Controls" : "Start Controls")
                 }
                 .tint(sensorModel.isFetching ? .red : .white)
+                
+                if sensorModel.isFetching {
+                    Text("Motion tracking active")
+                        .font(.footnote)
+                        .foregroundColor(.green)
+                }
             }
+            
             Text(watchSession.status)
                 .font(.footnote)
                 .foregroundColor(.gray)
@@ -92,6 +119,7 @@ struct ContentView: View {
                     didPlayHaptic = true
                 }
                 sensorModel.stopFetchingSensorData()
+                gameStarted = false
             }
         }
     }

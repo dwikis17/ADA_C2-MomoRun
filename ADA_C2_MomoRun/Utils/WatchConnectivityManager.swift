@@ -14,6 +14,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var isReachable: Bool = false
     var onDirection: ((String) -> Void)?
     var onRestart: (() -> Void)?
+    var onStart: (() -> Void)?
 
     override init() {
         super.init()
@@ -58,6 +59,10 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             if let restart = message["restart"] as? Bool, restart {
                 self.onRestart?()
                 print("Received restart command")
+            }
+            if let start = message["start"] as? Bool, start {
+                self.onStart?()
+                print("Received start command")
             }
         }
     }
