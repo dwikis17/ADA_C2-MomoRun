@@ -39,7 +39,25 @@
 		6491DFFB2DDC649C00212F1C /* MomoWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "MomoWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3A410B7B2DDEF57200D43FE7 /* Exceptions for "Shared" folder in "MomoWatch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				config.swift,
+			);
+			target = 6491DFFA2DDC649C00212F1C /* MomoWatch Watch App */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		3A410B792DDEF38E00D43FE7 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3A410B7B2DDEF57200D43FE7 /* Exceptions for "Shared" folder in "MomoWatch Watch App" target */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 		64365D782DD70AC600EC79D5 /* ADA_C2_MomoRun */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = ADA_C2_MomoRun;
@@ -73,6 +91,7 @@
 		64365D6D2DD70AC600EC79D5 = {
 			isa = PBXGroup;
 			children = (
+				3A410B792DDEF38E00D43FE7 /* Shared */,
 				64365D782DD70AC600EC79D5 /* ADA_C2_MomoRun */,
 				6491DFFC2DDC649C00212F1C /* MomoWatch Watch App */,
 				64365D772DD70AC600EC79D5 /* Products */,
@@ -106,6 +125,7 @@
 				6491E0072DDC649D00212F1C /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				3A410B792DDEF38E00D43FE7 /* Shared */,
 				64365D782DD70AC600EC79D5 /* ADA_C2_MomoRun */,
 			);
 			name = ADA_C2_MomoRun;

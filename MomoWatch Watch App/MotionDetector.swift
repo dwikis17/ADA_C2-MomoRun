@@ -7,6 +7,8 @@
 import CoreMotion
 import Foundation
 
+
+
 class SensorModel: ObservableObject {
     @Published var isMoving: Bool = false
     @Published var directionX: String = ""
@@ -28,6 +30,7 @@ class SensorModel: ObservableObject {
     @Published var velocityZ: Double = 0.0
     
     @Published var isFetching: Bool = false
+    
     
     var getDirection: Bool = true
     
@@ -72,7 +75,7 @@ class SensorModel: ObservableObject {
             
             lastTimestamp = nil
             
-            motionManager.deviceMotionUpdateInterval = 1.0 / 60.0 // 10 Hz
+            motionManager.deviceMotionUpdateInterval = Config.motionUpdateInterval // 10 Hz
             motionManager.startDeviceMotionUpdates(to: .main) {
                 [weak self] (motion, error) in
                 guard let self = self else { return } // prevents memory leaks
@@ -136,7 +139,7 @@ class SensorModel: ObservableObject {
             if (!getDirection) {
                 if let lastMovementTimestamp = self.lastMovementTimestamp {
                     let deltaLastMove = currentTimestamp - lastMovementTimestamp
-                    if (deltaLastMove > 0.75) {
+                    if (deltaLastMove > Config.motionDebounceTime) {
                         getDirection = true
                         print("getDirection: \(self.getDirection)")
                         self.directionX = ""
@@ -165,7 +168,7 @@ class SensorModel: ObservableObject {
             //            }
             
             // Threshold for ZUPT
-            let stillThreshold = 0.05
+            let stillThreshold = Config.motionStillThreshold
             
             if (abs(self.filteredAccelX) < stillThreshold &&
                 abs(self.filteredAccelY) < stillThreshold &&
@@ -192,15 +195,15 @@ class SensorModel: ObservableObject {
                 var isLeft = false
                 var isRight = false
                 
-                if velZ < -0.25 {
+                if velZ < Config.motionJumpThreshold {
                     isJump = true
-                } else if velZ > 0.25 {
+                } else if velZ > Config.motionCrouchThreshold {
                     isCrouch = true
                 }
                 
-                if velX > 0.1 {
+                if velX > Config.motionLeftThreshold {
                     isLeft = true
-                } else if velX < -0.1 {
+                } else if velX < Config.motionRightThreshold {
                     isRight = true
                 }
                 
