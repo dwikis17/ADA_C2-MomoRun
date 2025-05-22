@@ -38,60 +38,78 @@ struct ContentView: View {
     @State private var didPlayHaptic = false
     
     var body: some View {
-        VStack(spacing: 20) {
-            if watchSession.gameOver {
-                Text("Game Over!")
-                    .font(.title)
-                    .foregroundColor(.red)
-                    .padding()
-                Button("Restart") {
-                    watchSession.gameOver = false
-                    watchSession.status = ""
-                    didPlayHaptic = false
-                    sensorModel.startFetchingSensorData()
-                    if WCSession.default.isReachable {
-                        WCSession.default.sendMessage(["restart": true], replyHandler: nil)
+        ZStack {
+            Image(.momoBG)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                if watchSession.gameOver {
+                    Text("Game Over")
+                        .font(.custom("Jersey15-Regular", size:40))
+                        .foregroundColor(.red)
+                        .padding()
+                    Button(action : {
+                        watchSession.gameOver = false
+                        watchSession.status = ""
+                        didPlayHaptic = false
+                        sensorModel.startFetchingSensorData()
+                        if WCSession.default.isReachable {
+                            WCSession.default.sendMessage(["restart": true], replyHandler: nil)
+                        }
+                    }) {
+                        Image(.retryBtn)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
                     }
-                }
-                .font(.headline)
-                .padding()
-                .background(Color.green.opacity(0.8))
-                .cornerRadius(10)
-                .foregroundColor(.white)
-            } else {
-                Button(action: { if sensorModel.isFetching {
-                    sensorModel.stopFetchingSensorData()
+                    .buttonStyle(.plain)
+                    .frame(width: 150)
+//                    .font(.headline)
+//                    .padding()
+//                    .background(Color.green.opacity(0.8))
+//                    .background(
+//                        Image(.retryBtn)
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                    )
+//                    .cornerRadius(10)
+//                    .foregroundColor(.white)
                 } else {
-                    sensorModel.startFetchingSensorData()
+                    Button(action: { if sensorModel.isFetching {
+                        sensorModel.stopFetchingSensorData()
+                    } else {
+                        sensorModel.startFetchingSensorData()
+                    }
+                    }) {
+                        Text(sensorModel.isFetching ? "Stop Fetching" : "Start Fetching")
+                    }
+                    .tint(sensorModel.isFetching ? .red : .white)
                 }
-                }) {
-                    Text(sensorModel.isFetching ? "Stop Fetching" : "Start Fetching")
+                Text(watchSession.status)
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .padding(.top, 8)
+            }
+            .padding()
+            .onChange(of: sensorModel.directionX) {
+                if !sensorModel.directionX.isEmpty {
+                    sendDirection(sensorModel.directionX)
                 }
-                .tint(sensorModel.isFetching ? .red : .white)
             }
-            Text(watchSession.status)
-                .font(.footnote)
-                .foregroundColor(.gray)
-                .padding(.top, 8)
-        }
-        .padding()
-        .onChange(of: sensorModel.directionX) {
-            if !sensorModel.directionX.isEmpty {
-                sendDirection(sensorModel.directionX)
-            }
-        }
-        .onChange(of: sensorModel.directionZ, { 
+            .onChange(of: sensorModel.directionZ, { 
             if !sensorModel.directionZ.isEmpty {
                 sendDirection(sensorModel.directionZ)
             }
         })
         .onChange(of: watchSession.gameOver) { newValue in
-            if newValue {
-                if !didPlayHaptic {
-                    WKInterfaceDevice.current().play(.failure)
-                    didPlayHaptic = true
+                if newValue {
+                    if !didPlayHaptic {
+                        WKInterfaceDevice.current().play(.failure)
+                        didPlayHaptic = true
+                    }
+                    sensorModel.stopFetchingSensorData()
                 }
-                sensorModel.stopFetchingSensorData()
             }
         }
     }
