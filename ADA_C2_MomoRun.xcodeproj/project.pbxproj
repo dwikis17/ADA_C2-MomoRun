@@ -427,6 +427,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = MomoWatch;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "this app uses healthkit";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "this app write to healthkit";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.dio.ADA-C2-MomoRun";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -457,6 +459,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = MomoWatch;
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "this app uses healthkit";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "this app write to healthkit";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.dio.ADA-C2-MomoRun";
 				LD_RUNPATH_SEARCH_PATHS = (
