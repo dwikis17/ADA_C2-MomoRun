@@ -8,6 +8,8 @@
 import Foundation
 import SpriteKit
 import WatchConnectivity
+
+
 final class GameSceneLab: SKScene {
     struct Tile {
         let sprite: SKSpriteNode
@@ -16,7 +18,7 @@ final class GameSceneLab: SKScene {
     }
     private var floorTiles: [Tile] = []
     private let tileWidth: CGFloat = 32 // Adjust based on your tile size
-    private let moveSpeed: Double = 5 // tiles per second
+    private let moveSpeed: Double = Config.gameMoveSpeed // tiles per second
     private var lastUpdateTime: TimeInterval = 0
     private let floorLength = 18
     private let floorWidth = 3
@@ -24,11 +26,24 @@ final class GameSceneLab: SKScene {
     private var playerY: Int = 1 // Start at row 2
     private var obstacles: [SKSpriteNode] = []
     private var obstacleSpawnTimer: TimeInterval = 0
-    private let obstacleSpawnInterval: TimeInterval = 1 // seconds
+    private let obstacleSpawnInterval: TimeInterval = Config.obstacleSpawnInterval // seconds
     private let obstacleStartX: Int = 20
     private var isGameOver: Bool = false
     private var restartLabel: SKLabelNode?
     
+    // Add a property to hold the WatchSessionManager instance
+    private var watchSession: WatchSessionManager
+    
+    // Custom initializer that accepts the WatchSessionManager
+    init(size: CGSize, watchSession: WatchSessionManager) {
+        self.watchSession = watchSession
+        super.init(size: size)
+    }
+    
+    // Required initializer
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 
     private func createPlayer() {
         let playerNode = SKSpriteNode(imageNamed: "player_0") // Start with the first frame
@@ -125,6 +140,19 @@ final class GameSceneLab: SKScene {
         }
         createPlayer()
         // createArrows()
+        
+        // Set up watch session handlers
+        watchSession.onDirection = { [weak self] direction in
+            guard let self = self else { return }
+            if direction == "left" {
+                self.moveLeft()
+            } else if direction == "right" {
+                self.moveRight()
+            }
+        }
+        watchSession.onRestart = { [weak self] in
+            self?.restartGame()
+        }
     }
     
     // Helper for smooth isometric rendering (uses Double for x)
@@ -139,7 +167,7 @@ final class GameSceneLab: SKScene {
 
     private func sendMessageToWatch(_ message: String) {
         if WCSession.default.isReachable {
-            WCSession.default.sendMessage(["info": message], replyHandler: nil)
+            watchSession.sendToWatch(message: ["info": message])
         }
     }
     
