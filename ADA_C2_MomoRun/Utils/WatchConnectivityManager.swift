@@ -7,9 +7,11 @@
 
 import WatchConnectivity
 import Foundation // Import Foundation for NSObject
+import Combine // Import Combine for @Published
 
 class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var receivedMessage: String = ""
+    @Published var isReachable: Bool = false
     var onDirection: ((String) -> Void)?
     var onRestart: (() -> Void)?
 
@@ -18,12 +20,14 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         if WCSession.isSupported() {
             WCSession.default.delegate = self
             WCSession.default.activate()
+            self.isReachable = WCSession.default.isReachable
         }
     }
 
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         // Handle activation completion if needed
         print("WCSession activation did complete with state: \(activationState.rawValue)")
+        self.isReachable = session.isReachable
         if let error = error {
             print("WCSession activation error: \(error.localizedDescription)")
         }
@@ -37,6 +41,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     func sessionDidDeactivate(_ session: WCSession) {
         // Required for WCSessionDelegate - reactivate the session
         print("WCSession did deactivate, reactivating...")
+        self.isReachable = false
         WCSession.default.activate()
     }
 
