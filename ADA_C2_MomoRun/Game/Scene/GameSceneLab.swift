@@ -17,19 +17,21 @@ final class GameSceneLab: SKScene {
         var worldXOffset: Double // For smooth movement
     }
     private var floorTiles: [Tile] = []
+    private var grassTiles: [Tile] = []
     private let tileWidth: CGFloat = 32 // Adjust based on your tile size
     private let moveSpeed: Double = Config.gameMoveSpeed // tiles per second
     private var lastUpdateTime: TimeInterval = 0
     private let floorLength = 18
     private let floorWidth = 3
     private var player: SKSpriteNode?
-    private var playerY: Int = 1 // Start at row 2
+    private var playerY: Int = Config.playerY// Start at row 2
     private var obstacles: [SKSpriteNode] = []
     private var obstacleSpawnTimer: TimeInterval = 0
     private let obstacleSpawnInterval: TimeInterval = Config.obstacleSpawnInterval // seconds
     private let obstacleStartX: Int = 20
     private var isGameOver: Bool = false
     private var restartLabel: SKLabelNode?
+    private var boar: SKSpriteNode?
     
     // Add a property to hold the WatchSessionManager instance
     private var watchSession: WatchSessionManager
@@ -55,28 +57,64 @@ final class GameSceneLab: SKScene {
         addChild(playerNode)
         self.player = playerNode
 
-        // Animation setup
         let playerFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
         let runAnimation = SKAction.animate(with: playerFrames, timePerFrame: 0.1, resize: false, restore: true)
         let repeatRun = SKAction.repeatForever(runAnimation)
         playerNode.run(repeatRun, withKey: "run")
     }
 
-    private func createArrows() {
-        let leftArrow = SKSpriteNode(imageNamed: "arrow")
-        leftArrow.name = "arrow_left"
-        leftArrow.setScale(0.009)
-        leftArrow.position = CGPoint(x: 60, y: 60)
-        leftArrow.zPosition = 1000
-        leftArrow.zRotation = .pi  // Rotate 180 degrees to point left
-        addChild(leftArrow)
+    
+    private func setupBackground() {
+        let backgroundNode = SKSpriteNode(imageNamed: "background")
+        backgroundNode.position = CGPoint(x: -35, y: 16)
+        backgroundNode.zPosition = -1000
+        backgroundNode.setScale(0.22) // Zoom out by scaling up the background
+        addChild(backgroundNode)
+    }
 
-        let rightArrow = SKSpriteNode(imageNamed: "arrow")
-        rightArrow.name = "arrow_right"
-        rightArrow.setScale(0.009)
-        rightArrow.position = CGPoint(x: 140, y: 60)
-        rightArrow.zPosition = 1000
-        addChild(rightArrow)
+    private func setupGrassTiles() {
+        // Bottom border (y = -1)
+        for x in -13..<floorLength {
+            let sprite = SKSpriteNode(imageNamed: "grass")
+            let worldPos = Vector(x: x, y: -1)
+            let screenVector = convertWorldToScreen(worldPos)
+            sprite.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
+            sprite.zPosition = CGFloat(convertWorldToZPosition(worldPos))
+            addChild(sprite)
+            grassTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
+        }
+        // Top border (y = floorWidth)
+        for x in -13..<floorLength {
+            let sprite = SKSpriteNode(imageNamed: "grass")
+            let worldPos = Vector(x: x, y: floorWidth)
+            let screenVector = convertWorldToScreen(worldPos)
+            sprite.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
+            sprite.zPosition = CGFloat(convertWorldToZPosition(worldPos))
+            addChild(sprite)
+            grassTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
+        }
+    }
+    private func createBoar() {
+        let boarNode = SKSpriteNode(imageNamed: "boar_0")
+        boarNode.anchorPoint = CGPoint(x: 0.5, y: 0.0)
+        let boarPosition = Vector(x: -8, y: playerY, z: 3)
+        let screenVector = convertWorldToScreen(boarPosition)
+        let xOffset: CGFloat = 40 // tweak as needed
+        let yOffset: CGFloat = -8 // tweak as needed
+        boarNode.position = CGPoint(
+            x: CGFloat(screenVector.x) + xOffset,
+            y: CGFloat(screenVector.y) + yOffset
+        )
+        boarNode.zPosition = CGFloat(convertWorldToZPosition(boarPosition))
+        boarNode.setScale(0.8)
+        addChild(boarNode)
+        self.boar = boarNode
+
+        // Animation setup
+        let boarFrames: [SKTexture] = (0..<4).map { SKTexture(imageNamed: "boar_\($0)") }
+        let runAnimation = SKAction.animate(with: boarFrames, timePerFrame: 0.1, resize: false, restore: true)
+        let repeatRun = SKAction.repeatForever(runAnimation)
+        boarNode.run(repeatRun, withKey: "run")
     }
 
     private func moveLeft() {
@@ -111,21 +149,21 @@ final class GameSceneLab: SKScene {
         let screenVector = convertWorldToScreen(position)
         playerNode.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
         playerNode.zPosition = CGFloat(convertWorldToZPosition(position))
+        let xOffset: CGFloat = 40 // tweak as needed
+        let yOffset: CGFloat = -8 // tweak as needed
+        // Move boar to follow player
+        if let boarNode = boar {
+            let boarPosition = Vector(x: -8, y: playerY, z: 3)
+            let boarScreenVector = convertWorldToScreen(boarPosition)
+            boarNode.position = CGPoint(
+            x: CGFloat(boarScreenVector.x) + xOffset,
+            y: CGFloat(boarScreenVector.y) + yOffset
+            )        
+            boarNode.zPosition = CGFloat(convertWorldToZPosition(boarPosition))
+        }
     }
 
-    override func didMove(to view: SKView) {
-        size = view.frame.size
-        scaleMode = .aspectFill
-        
-        let cameraNode = SKCameraNode()
-    
-        let cameraScreenVector = convertWorldToScreen(Vector(x: 2, y: 2))
-        cameraNode.position = CGPoint(x: CGFloat(cameraScreenVector.x), y: CGFloat(cameraScreenVector.y))
-        cameraNode.setScale(0.4) // Zoom in to make tiles look bigger
-        addChild(cameraNode)
-        self.camera = cameraNode
-
-        // Create floor tiles with world positions
+    private func createTiles() {
         for y in 0..<floorWidth {
             for x in -13..<floorLength {
                 let imageName = y == 0 || y == 2 ? "tile_side" : "tile_middle"
@@ -138,16 +176,63 @@ final class GameSceneLab: SKScene {
                 floorTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
             }
         }
-        createPlayer()
-        // createArrows()
+        setupGrassTiles()
+    }
+
+    private func createCamera() {
+      
+        
+        let cameraNode = SKCameraNode()
+    
+        let cameraScreenVector = convertWorldToScreen(Vector(x: 0, y: 2))
+        cameraNode.position = CGPoint(x: CGFloat(cameraScreenVector.x), y: CGFloat(cameraScreenVector.y))
+        cameraNode.setScale(0.4) // Zoom in to make tiles look bigger
+        addChild(cameraNode)
+        self.camera = cameraNode
+
+        
+    }
+
+    private func createArrowButtons() {
+        // Left Arrow
+        let leftArrow = SKSpriteNode(imageNamed: "arrow")
+        leftArrow.name = "arrow_left"
+        leftArrow.setScale(0.5)
+        leftArrow.position = CGPoint(x: 60, y: 60)
+        leftArrow.zPosition = 1000
+        addChild(leftArrow)
+        // Right Arrow
+        let rightArrow = SKSpriteNode(imageNamed: "arrow")
+        rightArrow.name = "arrow_right"
+        rightArrow.setScale(0.5)
+        rightArrow.position = CGPoint(x: size.width - 60, y: 60)
+        rightArrow.zPosition = 1000
+        addChild(rightArrow)
+    }
+
+    override func didMove(to view: SKView) {
+        size = view.frame.size
+        scaleMode = .aspectFill
+        
+        createCamera()
+        createTiles()
+        createPlayer()  
+        createBoar()
+        setupBackground()
+        createArrowButtons()
         
         // Set up watch session handlers
         watchSession.onDirection = { [weak self] direction in
             guard let self = self else { return }
+            print("direction: \(direction)")
             if direction == "left" {
                 self.moveLeft()
             } else if direction == "right" {
                 self.moveRight()
+            } else if direction == "jump" {
+                self.receiveJumpSignal()
+            } else if direction == "crouch" {
+                self.receiveCrouchSignal()
             }
         }
         watchSession.onRestart = { [weak self] in
@@ -214,8 +299,27 @@ final class GameSceneLab: SKScene {
             floorTiles[i].worldPosition = Vector(x: Int(floor(floorTiles[i].worldXOffset)), y: floorTiles[i].worldPosition.y)
         }
         
+        // Animate grass border tiles like floor tiles
+        for i in 0..<grassTiles.count {
+            grassTiles[i].worldXOffset -= moveSpeed * deltaTime
+            if grassTiles[i].worldXOffset < -13 {
+                let y = grassTiles[i].worldPosition.y
+                let maxX = grassTiles
+                    .filter { $0.worldPosition.y == y }
+                    .map { $0.worldXOffset }
+                    .max() ?? 0
+                grassTiles[i].worldXOffset = maxX + 1
+            }
+            grassTiles[i].worldPosition = Vector(x: Int(floor(grassTiles[i].worldXOffset)), y: grassTiles[i].worldPosition.y)
+        }
+        
         // Update sprite positions (use smooth Double for rendering)
         for tile in floorTiles {
+            let pos = convertWorldToScreenSmooth(tile.worldXOffset, tile.worldPosition.y)
+            tile.sprite.position = pos
+            tile.sprite.zPosition = -Double(pos.y)
+        }
+        for tile in grassTiles {
             let pos = convertWorldToScreenSmooth(tile.worldXOffset, tile.worldPosition.y)
             tile.sprite.position = pos
             tile.sprite.zPosition = -Double(pos.y)
@@ -283,7 +387,7 @@ final class GameSceneLab: SKScene {
         let nodes = self.nodes(at: location)
         for node in nodes {
             if node.name == "arrow_left" {
-                moveLeft()
+                receiveCrouchSignal()
             } else if node.name == "arrow_right" {
                 moveRight()
             }
@@ -296,5 +400,52 @@ final class GameSceneLab: SKScene {
     }
     @objc func moveRightFromWatch() {
         moveRight()
+    }
+
+    @objc func jumpFromWatch() {
+        receiveJumpSignal()
+    }
+
+    @objc func crouchFromWatch() {
+        receiveCrouchSignal()
+    }
+
+    private func receiveJumpSignal() {
+        guard let playerNode = player else { return }
+        // Stop current animation
+        playerNode.removeAction(forKey: "run")
+        // Prepare jump frames
+        let jumpFrames: [SKTexture] = (0..<10).map { SKTexture(imageNamed: "player_jump_\($0)") }
+        let jumpAction = SKAction.animate(with: jumpFrames, timePerFrame: 0.08, resize: false, restore: true)
+        // Simulate jump arc (move up, then down)
+        let jumpHeight: CGFloat = 30
+        let jumpDuration: TimeInterval = 0.44 // 11 * 0.08 / 2 (up and down)
+        let moveUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: jumpDuration)
+        moveUp.timingMode = .easeOut
+        let moveDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: jumpDuration)
+        moveDown.timingMode = .easeIn
+        let jumpMove = SKAction.sequence([moveUp, moveDown])
+        let group = SKAction.group([jumpAction, jumpMove])
+        // After jump, resume running
+        let runFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+        let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
+        let repeatRun = SKAction.repeatForever(runAnimation)
+        let sequence = SKAction.sequence([group, repeatRun])
+        playerNode.run(sequence, withKey: "run")
+    }
+
+    private func receiveCrouchSignal() {
+         guard let playerNode = player else { return }
+        // Stop current animation
+        playerNode.removeAction(forKey: "run")
+        // Prepare jump frames
+        let crouchFrames: [SKTexture] = (0..<10).map { SKTexture(imageNamed: "player_crouch_\($0)") }
+        let crouchAction = SKAction.animate(with: crouchFrames, timePerFrame: 0.08, resize: false, restore: true)
+        // After jump, resume running
+        let runFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+        let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
+        let repeatRun = SKAction.repeatForever(runAnimation)
+        let sequence = SKAction.sequence([crouchAction, repeatRun])
+        playerNode.run(sequence, withKey: "run")
     }
 }
