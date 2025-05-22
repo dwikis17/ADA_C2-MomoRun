@@ -39,26 +39,43 @@ struct ContentView: View {
     @State private var gameStarted = false
     
     var body: some View {
-        VStack(spacing: 20) {
-            if watchSession.gameOver {
-                Text("Game Over!")
-                    .font(.title)
-                    .foregroundColor(.red)
-                    .padding()
-                Button("Restart") {
-                    watchSession.gameOver = false
-                    watchSession.status = ""
-                    didPlayHaptic = false
-                    sensorModel.startFetchingSensorData()
-                    if WCSession.default.isReachable {
-                        WCSession.default.sendMessage(["restart": true], replyHandler: nil)
+        ZStack {
+            Image(.momoBG)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .edgesIgnoringSafeArea(.all)
+            
+            VStack(spacing: 20) {
+                if watchSession.gameOver {
+                    Text("Game Over")
+                        .font(.custom("Jersey15-Regular", size:40))
+                        .foregroundColor(.red)
+                        .padding()
+                    Button(action : {
+                        watchSession.gameOver = false
+                        watchSession.status = ""
+                        didPlayHaptic = false
+                        sensorModel.startFetchingSensorData()
+                        if WCSession.default.isReachable {
+                            WCSession.default.sendMessage(["restart": true], replyHandler: nil)
+                        }
+                    }) {
+                        Image(.retryBtn)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
                     }
-                }
-                .font(.headline)
-                .padding()
-                .background(Color.green.opacity(0.8))
-                .cornerRadius(10)
-                .foregroundColor(.white)
+                    .buttonStyle(.plain)
+                    .frame(width: 150)
+//                    .font(.headline)
+//                    .padding()
+//                    .background(Color.green.opacity(0.8))
+//                    .background(
+//                        Image(.retryBtn)
+//                            .resizable()
+//                            .aspectRatio(contentMode: .fit)
+//                    )
+//                    .cornerRadius(10)
+//                    .foregroundColor(.white)
             } else if !gameStarted {
                 // Start Game button when game hasn't started yet
                 Text("MomoRun")
@@ -77,37 +94,37 @@ struct ContentView: View {
                 .background(Color.blue.opacity(0.8))
                 .cornerRadius(10)
                 .foregroundColor(.white)
-            } else {
-                // Motion controls section (only shown when game is started)
-                Button(action: { if sensorModel.isFetching {
-                    sensorModel.stopFetchingSensorData()
                 } else {
-                    sensorModel.startFetchingSensorData()
-                }
-                }) {
-                    Text(sensorModel.isFetching ? "Stop Controls" : "Start Controls")
-                }
-                .tint(sensorModel.isFetching ? .red : .white)
+                // Motion controls section (only shown when game is started)
+                    Button(action: { if sensorModel.isFetching {
+                        sensorModel.stopFetchingSensorData()
+                    } else {
+                        sensorModel.startFetchingSensorData()
+                    }
+                    }) {
+                        Text(sensorModel.isFetching ? "Stop Controls" : "Start Controls")
+                    }
+                    .tint(sensorModel.isFetching ? .red : .white)
                 
                 if sensorModel.isFetching {
                     Text("Motion tracking active")
                         .font(.footnote)
                         .foregroundColor(.green)
                 }
-            }
+                }
             
-            Text(watchSession.status)
-                .font(.footnote)
-                .foregroundColor(.gray)
-                .padding(.top, 8)
-        }
-        .padding()
-        .onChange(of: sensorModel.directionX) {
-            if !sensorModel.directionX.isEmpty {
-                sendDirection(sensorModel.directionX)
+                Text(watchSession.status)
+                    .font(.footnote)
+                    .foregroundColor(.gray)
+                    .padding(.top, 8)
             }
-        }
-        .onChange(of: sensorModel.directionZ, { 
+            .padding()
+            .onChange(of: sensorModel.directionX) {
+                if !sensorModel.directionX.isEmpty {
+                    sendDirection(sensorModel.directionX)
+                }
+            }
+            .onChange(of: sensorModel.directionZ, { 
             if !sensorModel.directionZ.isEmpty {
                 sendDirection(sensorModel.directionZ)
             }
