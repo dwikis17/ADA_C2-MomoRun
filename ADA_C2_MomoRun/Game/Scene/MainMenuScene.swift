@@ -13,9 +13,12 @@ final class MainMenuScene: SKScene {
     // Add a property to hold the WatchSessionManager instance
     private var watchSession: WatchSessionManager
     
-    // Properties for the breathing text instruction
-    private var instructionLabel: SKLabelNode?
-    private var breathingAction: SKAction?
+    // Text size constant
+    private let kTextFontSize: CGFloat = 48
+    
+    // Add a property to hold the breathing group node
+    private var breathingGroup: SKNode?
+    private var breathingParticles: SKEmitterNode?
     
     // Custom initializer that accepts the WatchSessionManager
     init(size: CGSize, watchSession: WatchSessionManager) {
@@ -32,7 +35,9 @@ final class MainMenuScene: SKScene {
         size = view.frame.size
         scaleMode = .aspectFill
 
-        // MARK: - Background
+        addBackgroundParticles() // Add subtle background particles
+
+        // MARK: - Background (Pixel Art Sky with Trees)
         let backgroundTexture = SKTexture(imageNamed: "main-background")
         let backgroundNode = SKSpriteNode(texture: backgroundTexture)
         backgroundNode.position = CGPoint(x: size.width / 2, y: size.height / 2)
@@ -42,11 +47,14 @@ final class MainMenuScene: SKScene {
         backgroundNode.zPosition = -1 // Ensure it's behind other elements
         addChild(backgroundNode)
 
-        // MARK: - Breathing Instruction Text
-        createBreathingText()
+        // MARK: - Game Title
+        createGameTitle()
+        
+        // MARK: - Play Button Instruction
+        createPlayButtonInstruction()
         
         // MARK: - Settings Button
-        let settingsButtonTexture = SKTexture(imageNamed: "settings-button") // Placeholder image name
+        let settingsButtonTexture = SKTexture(imageNamed: "settings-button")
         let settingsButton = SKSpriteNode(texture: settingsButtonTexture)
         // Position in top right with some padding
         let padding: CGFloat = 40
@@ -57,33 +65,163 @@ final class MainMenuScene: SKScene {
         
         // Set up watch session start handler
         watchSession.onStart = { [weak self] in
-            self?.startGame()
+            self?.animateBreathingGroupAndStartGame()
         }
     }
     
-    private func createBreathingText() {
-        // Create the instruction label
-        let label = SKLabelNode(fontNamed: "AvenirNext-Bold")
-        label.text = "Start from Watch"
-        label.fontSize = 36
-        label.fontColor = .white
-        label.position = CGPoint(x: size.width / 2, y: size.height * 0.4)
-        label.zPosition = 10
-        addChild(label)
-        self.instructionLabel = label
+    private func createGameTitle() {
         
-        // Create breathing animation
-        let scaleUp = SKAction.scale(to: 1.2, duration: 1.0)
-        scaleUp.timingMode = .easeInEaseOut
-        let scaleDown = SKAction.scale(to: 1.0, duration: 1.0)
-        scaleDown.timingMode = .easeInEaseOut
-        let breathe = SKAction.sequence([scaleUp, scaleDown])
-        let breatheForever = SKAction.repeatForever(breathe)
+        // Add subtle floating animation to the title
+        let moveUp = SKAction.moveBy(x: 0, y: 10, duration: 2.0)
+        moveUp.timingMode = .easeInEaseOut
+        let moveDown = SKAction.moveBy(x: 0, y: -10, duration: 2.0)
+        moveDown.timingMode = .easeInEaseOut
+        let sequence = SKAction.sequence([moveUp, moveDown])
+        let repeatForever = SKAction.repeatForever(sequence)
         
-        // Apply the animation
-        label.run(breatheForever)
     }
     
+    private func createPlayButtonInstruction() {
+        // Remove previous group if any
+        breathingGroup?.removeFromParent()
+        breathingParticles?.removeFromParent()
+        let group = SKNode()
+        group.zPosition = 10
+        breathingGroup = group
+        // Set group position to play button center
+        let groupCenter = CGPoint(x: (size.width / 2) + 15, y: (size.height * 0.4) + 15)
+        group.position = groupCenter
+        addChild(group)
+
+        // Create stroke color from #471715
+        let strokeColor = UIColor(red: 71/255.0, green: 23/255.0, blue: 21/255.0, alpha: 1.0)
+        let kTextFontSize: CGFloat = 48
+        // --- Press ---
+        let pressPos = CGPoint(x: (size.width / 2 - 100) - groupCenter.x, y: (size.height * 0.4) - groupCenter.y)
+        for xOffset in [-2, 2] {
+            for yOffset in [-2, 2] {
+                let shadow = SKLabelNode(fontNamed: "Jersey15-Regular")
+                shadow.text = "Press"
+                shadow.fontSize = kTextFontSize
+                shadow.fontColor = strokeColor
+                shadow.position = CGPoint(x: pressPos.x + CGFloat(xOffset), y: pressPos.y + CGFloat(yOffset))
+                shadow.zPosition = 9
+                group.addChild(shadow)
+            }
+        }
+        let pressLabel = SKLabelNode(fontNamed: "Jersey15-Regular")
+        pressLabel.text = "Press"
+        pressLabel.fontSize = kTextFontSize
+        pressLabel.fontColor = .white
+        pressLabel.position = pressPos
+        pressLabel.zPosition = 10
+        group.addChild(pressLabel)
+        // --- Play Button ---
+        let playButton = SKSpriteNode(imageNamed: "play-button")
+        playButton.setScale(0.4)
+        playButton.position = .zero // Center of group
+        playButton.zPosition = 10
+        group.addChild(playButton)
+        // --- on ---
+        let onPos = CGPoint(x: (size.width / 2 + 100) - groupCenter.x, y: (size.height * 0.4) - groupCenter.y)
+        for xOffset in [-2, 2] {
+            for yOffset in [-2, 2] {
+                let shadow = SKLabelNode(fontNamed: "Jersey15-Regular")
+                shadow.text = "on"
+                shadow.fontSize = kTextFontSize
+                shadow.fontColor = strokeColor
+                shadow.position = CGPoint(x: onPos.x + CGFloat(xOffset), y: onPos.y + CGFloat(yOffset))
+                shadow.zPosition = 9
+                group.addChild(shadow)
+            }
+        }
+        let onLabel = SKLabelNode(fontNamed: "Jersey15-Regular")
+        onLabel.text = "on"
+        onLabel.fontSize = kTextFontSize
+        onLabel.fontColor = .white
+        onLabel.position = onPos
+        onLabel.zPosition = 10
+        group.addChild(onLabel)
+        // --- your Apple Watch ---
+        let watchPos = CGPoint(x: (size.width / 2) - groupCenter.x, y: (size.height * 0.28) - groupCenter.y)
+        for xOffset in [-2, 2] {
+            for yOffset in [-2, 2] {
+                let shadow = SKLabelNode(fontNamed: "Jersey15-Regular")
+                shadow.text = "your Apple Watch"
+                shadow.fontSize = kTextFontSize
+                shadow.fontColor = strokeColor
+                shadow.position = CGPoint(x: watchPos.x + CGFloat(xOffset), y: watchPos.y + CGFloat(yOffset))
+                shadow.zPosition = 9
+                group.addChild(shadow)
+            }
+        }
+        let watchLabel = SKLabelNode(fontNamed: "Jersey15-Regular")
+        watchLabel.text = "your Apple Watch"
+        watchLabel.fontSize = kTextFontSize
+        watchLabel.fontColor = .white
+        watchLabel.position = watchPos
+        watchLabel.zPosition = 10
+        group.addChild(watchLabel)
+
+        // Add breathing animation to the group (subtle)
+        let breatheUp = SKAction.scale(to: 1.03, duration: 1.1)
+        breatheUp.timingMode = .easeInEaseOut
+        let breatheDown = SKAction.scale(to: 0.97, duration: 1.1)
+        breatheDown.timingMode = .easeInEaseOut
+        let breatheSequence = SKAction.sequence([breatheUp, breatheDown])
+        let breatheForever = SKAction.repeatForever(breatheSequence)
+        group.run(breatheForever, withKey: "breathing")
+
+        // Add particles (simple sparkle effect)
+        if let particles = makeBreathingParticles() {
+            particles.position = CGPoint(x: 0, y: (size.height * 0.36) - groupCenter.y)
+            particles.zPosition = 20
+            group.addChild(particles)
+            breathingParticles = particles
+        }
+    }
+    
+    private func makeBreathingParticles() -> SKEmitterNode? {
+        let emitter = SKEmitterNode()
+        emitter.particleTexture = SKTexture(imageNamed: "sparkle") // Add a small white sparkle asset
+        emitter.particleBirthRate = 8
+        emitter.particleLifetime = 1.2
+        emitter.particlePositionRange = CGVector(dx: 220, dy: 60)
+        emitter.particleSpeed = 18
+        emitter.particleSpeedRange = 10
+        emitter.particleAlpha = 0.7
+        emitter.particleAlphaRange = 0.2
+        emitter.particleAlphaSpeed = -0.6
+        emitter.particleScale = 0.1
+        emitter.particleScaleRange = 0.08
+        emitter.particleScaleSpeed = -0.12
+        emitter.particleColor = .white
+        emitter.particleColorBlendFactor = 1.0
+        emitter.particleBlendMode = .add
+        emitter.emissionAngleRange = .pi * 2
+        return emitter
+    }
+
+    private func animateBreathingGroupAndStartGame() {
+        guard let group = breathingGroup else {
+            startGame()
+            return
+        }
+        // Stop breathing
+        group.removeAction(forKey: "breathing")
+        // Animate: scale up and fade out
+        let scaleUp = SKAction.scale(to: 1.25, duration: 0.35)
+        let fadeOut = SKAction.fadeOut(withDuration: 0.35)
+        let groupAnim = SKAction.group([scaleUp, fadeOut])
+        group.run(groupAnim) { [weak self] in
+            group.removeFromParent()
+            self?.breathingParticles?.removeFromParent()
+            self?.startGame()
+        }
+        // Animate particles fade out
+        breathingParticles?.run(SKAction.fadeOut(withDuration: 0.35))
+    }
+
     private func startGame() {
         // Transition to the Game Scene, passing the watchSession instance
         let gameScene = GameSceneLab(size: size, watchSession: watchSession)
@@ -105,5 +243,27 @@ final class MainMenuScene: SKScene {
                 break
             }
         }
+    }
+
+    private func addBackgroundParticles() {
+        let emitter = SKEmitterNode()
+        emitter.particleTexture = SKTexture(imageNamed: "bg-sparkle") // Use a soft pixel/sparkle asset
+        emitter.particleBirthRate = 2
+        emitter.particleLifetime = 6
+        emitter.particlePositionRange = CGVector(dx: size.width, dy: size.height * 0.7)
+        emitter.particleSpeed = 10
+        emitter.particleSpeedRange = 8
+        emitter.particleAlpha = 0.18
+        emitter.particleAlphaRange = 0.1
+        emitter.particleAlphaSpeed = -0.02
+        emitter.particleScale = 0.12
+        emitter.particleScaleRange = 0.05
+        emitter.particleScaleSpeed = -0.01
+        emitter.particleColor = .white
+        emitter.particleColorBlendFactor = 1.0
+        emitter.particleBlendMode = .add
+        emitter.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        emitter.zPosition = -0.5 // Just above the background, below everything else
+        addChild(emitter)
     }
 } 

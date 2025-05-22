@@ -58,6 +58,8 @@ struct ContentView: View {
                         sensorModel.startFetchingSensorData()
                         if WCSession.default.isReachable {
                             WCSession.default.sendMessage(["restart": true], replyHandler: nil)
+                            WCSession.default.sendMessage(["start": true], replyHandler: nil)
+                            gameStarted = true
                         }
                     }) {
                         Image(.retryBtn)
@@ -76,71 +78,73 @@ struct ContentView: View {
 //                    )
 //                    .cornerRadius(10)
 //                    .foregroundColor(.white)
-            } else if !gameStarted {
-                // Start Game button when game hasn't started yet
-                Text("MomoRun")
-                    .font(.title3)
-                    .padding(.bottom, 5)
-                
-                Button("Start Game") {
-                    if WCSession.default.isReachable {
-                        WCSession.default.sendMessage(["start": true], replyHandler: nil)
-                        gameStarted = true
-                        sensorModel.startFetchingSensorData()
+                } else if !gameStarted {
+                    // Start Game button when game hasn't started yet
+                    Text("MomoRun")
+                        .font(.title3)
+                        .padding(.bottom, 5)
+                    
+                    Button("Start Game") {
+                        if WCSession.default.isReachable {
+                            WCSession.default.sendMessage(["start": true], replyHandler: nil)
+                            gameStarted = true
+                            sensorModel.startFetchingSensorData()
+                        }
                     }
-                }
-                .font(.headline)
-                .padding()
-                .background(Color.blue.opacity(0.8))
-                .cornerRadius(10)
-                .foregroundColor(.white)
+                    .font(.headline)
+                    .padding()
+                    .background(Color.blue.opacity(0.8))
+                    .cornerRadius(10)
+                    .foregroundColor(.white)
                 } else {
-                // Motion controls section (only shown when game is started)
-                    Button(action: { if sensorModel.isFetching {
-                        sensorModel.stopFetchingSensorData()
-                    } else {
-                        sensorModel.startFetchingSensorData()
-                    }
+                    // Motion controls section (only shown when game is started)
+                    Button(action: { 
+                        if sensorModel.isFetching {
+                            sensorModel.stopFetchingSensorData()
+                        } else {
+                            sensorModel.startFetchingSensorData()
+                        }
                     }) {
                         Text(sensorModel.isFetching ? "Stop Controls" : "Start Controls")
                     }
                     .tint(sensorModel.isFetching ? .red : .white)
+                    
+                    if sensorModel.isFetching {
+                        Text("Motion tracking active")
+                            .font(.footnote)
+                            .foregroundColor(.green)
+                    }
+                }
                 
-                if sensorModel.isFetching {
-                    Text("Motion tracking active")
-                        .font(.footnote)
-                        .foregroundColor(.green)
-                }
-                }
-            
                 Text(watchSession.status)
                     .font(.footnote)
                     .foregroundColor(.gray)
                     .padding(.top, 8)
             }
             .padding()
-            .onChange(of: sensorModel.directionX) {
+            .onChange(of: sensorModel.directionX) { _ in
                 if !sensorModel.directionX.isEmpty {
                     sendDirection(sensorModel.directionX)
                 }
             }
-            .onChange(of: sensorModel.directionZ, { 
-            if !sensorModel.directionZ.isEmpty {
-                sendDirection(sensorModel.directionZ)
-            }
-        })
-        .onChange(of: watchSession.gameOver) { newValue in
-            if newValue {
-                if !didPlayHaptic {
-                    WKInterfaceDevice.current().play(.failure)
-                    didPlayHaptic = true
+            .onChange(of: sensorModel.directionZ) { _ in
+                if !sensorModel.directionZ.isEmpty {
+                    sendDirection(sensorModel.directionZ)
                 }
-                sensorModel.stopFetchingSensorData()
-                gameStarted = false
+            }
+            .onChange(of: watchSession.gameOver) { newValue in
+                if newValue {
+                    if !didPlayHaptic {
+                        WKInterfaceDevice.current().play(.failure)
+                        didPlayHaptic = true
+                    }
+                    sensorModel.stopFetchingSensorData()
+                    gameStarted = false
+                }
             }
         }
     }
-
+    
     private func sendDirection(_ direction: String) {
         if WCSession.default.isReachable {
             WCSession.default.sendMessage(["direction": direction], replyHandler: nil, errorHandler: { error in
