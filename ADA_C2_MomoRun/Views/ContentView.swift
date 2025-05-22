@@ -21,6 +21,7 @@ struct ContentView: View {
     var body: some View {
         // Present the MainMenuScene first, passing the watchSession
         GeometryReader { geometry in
+
             SpriteView(scene: MainMenuScene(size: geometry.size, watchSession: watchSession))
                 .ignoresSafeArea()
         }
