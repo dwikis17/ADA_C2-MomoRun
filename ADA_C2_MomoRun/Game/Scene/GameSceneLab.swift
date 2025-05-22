@@ -149,17 +149,21 @@ final class GameSceneLab: SKScene {
         let screenVector = convertWorldToScreen(position)
         playerNode.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
         playerNode.zPosition = CGFloat(convertWorldToZPosition(position))
+        let xOffset: CGFloat = 40 // tweak as needed
+        let yOffset: CGFloat = -8 // tweak as needed
         // Move boar to follow player
         if let boarNode = boar {
-            let boarPosition = Vector(x: -5, y: playerY, z: 3)
+            let boarPosition = Vector(x: -8, y: playerY, z: 3)
             let boarScreenVector = convertWorldToScreen(boarPosition)
-            boarNode.position = CGPoint(x: CGFloat(boarScreenVector.x), y: CGFloat(boarScreenVector.y))
+            boarNode.position = CGPoint(
+            x: CGFloat(boarScreenVector.x) + xOffset,
+            y: CGFloat(boarScreenVector.y) + yOffset
+            )        
             boarNode.zPosition = CGFloat(convertWorldToZPosition(boarPosition))
         }
     }
 
     private func createTiles() {
-
         for y in 0..<floorWidth {
             for x in -13..<floorLength {
                 let imageName = y == 0 || y == 2 ? "tile_side" : "tile_middle"
@@ -189,6 +193,23 @@ final class GameSceneLab: SKScene {
         
     }
 
+    private func createArrowButtons() {
+        // Left Arrow
+        let leftArrow = SKSpriteNode(imageNamed: "arrow")
+        leftArrow.name = "arrow_left"
+        leftArrow.setScale(0.5)
+        leftArrow.position = CGPoint(x: 60, y: 60)
+        leftArrow.zPosition = 1000
+        addChild(leftArrow)
+        // Right Arrow
+        let rightArrow = SKSpriteNode(imageNamed: "arrow")
+        rightArrow.name = "arrow_right"
+        rightArrow.setScale(0.5)
+        rightArrow.position = CGPoint(x: size.width - 60, y: 60)
+        rightArrow.zPosition = 1000
+        addChild(rightArrow)
+    }
+
     override func didMove(to view: SKView) {
         size = view.frame.size
         scaleMode = .aspectFill
@@ -198,14 +219,20 @@ final class GameSceneLab: SKScene {
         createPlayer()  
         createBoar()
         setupBackground()
+        createArrowButtons()
         
         // Set up watch session handlers
         watchSession.onDirection = { [weak self] direction in
             guard let self = self else { return }
+            print("direction: \(direction)")
             if direction == "left" {
                 self.moveLeft()
             } else if direction == "right" {
                 self.moveRight()
+            } else if direction == "jump" {
+                self.receiveJumpSignal()
+            } else if direction == "crouch" {
+                self.receiveCrouchSignal()
             }
         }
         watchSession.onRestart = { [weak self] in
@@ -326,10 +353,10 @@ final class GameSceneLab: SKScene {
         }
         // Spawn new obstacles at random intervals
         obstacleSpawnTimer += deltaTime
-        // if obstacleSpawnTimer >= obstacleSpawnInterval {
-        //     obstacleSpawnTimer = 0
-        //     createObstacles()
-        // }
+        if obstacleSpawnTimer >= obstacleSpawnInterval {
+            obstacleSpawnTimer = 0
+            createObstacles()
+        }
         // If collision, stop the game and tint player red
         if didCollide {
             sendMessageToWatch("Game Over")
@@ -360,7 +387,7 @@ final class GameSceneLab: SKScene {
         let nodes = self.nodes(at: location)
         for node in nodes {
             if node.name == "arrow_left" {
-                moveLeft()
+                receiveCrouchSignal()
             } else if node.name == "arrow_right" {
                 moveRight()
             }
@@ -373,5 +400,52 @@ final class GameSceneLab: SKScene {
     }
     @objc func moveRightFromWatch() {
         moveRight()
+    }
+
+    @objc func jumpFromWatch() {
+        receiveJumpSignal()
+    }
+
+    @objc func crouchFromWatch() {
+        receiveCrouchSignal()
+    }
+
+    private func receiveJumpSignal() {
+        guard let playerNode = player else { return }
+        // Stop current animation
+        playerNode.removeAction(forKey: "run")
+        // Prepare jump frames
+        let jumpFrames: [SKTexture] = (0..<10).map { SKTexture(imageNamed: "player_jump_\($0)") }
+        let jumpAction = SKAction.animate(with: jumpFrames, timePerFrame: 0.08, resize: false, restore: true)
+        // Simulate jump arc (move up, then down)
+        let jumpHeight: CGFloat = 30
+        let jumpDuration: TimeInterval = 0.44 // 11 * 0.08 / 2 (up and down)
+        let moveUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: jumpDuration)
+        moveUp.timingMode = .easeOut
+        let moveDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: jumpDuration)
+        moveDown.timingMode = .easeIn
+        let jumpMove = SKAction.sequence([moveUp, moveDown])
+        let group = SKAction.group([jumpAction, jumpMove])
+        // After jump, resume running
+        let runFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+        let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
+        let repeatRun = SKAction.repeatForever(runAnimation)
+        let sequence = SKAction.sequence([group, repeatRun])
+        playerNode.run(sequence, withKey: "run")
+    }
+
+    private func receiveCrouchSignal() {
+         guard let playerNode = player else { return }
+        // Stop current animation
+        playerNode.removeAction(forKey: "run")
+        // Prepare jump frames
+        let crouchFrames: [SKTexture] = (0..<10).map { SKTexture(imageNamed: "player_crouch_\($0)") }
+        let crouchAction = SKAction.animate(with: crouchFrames, timePerFrame: 0.08, resize: false, restore: true)
+        // After jump, resume running
+        let runFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+        let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
+        let repeatRun = SKAction.repeatForever(runAnimation)
+        let sequence = SKAction.sequence([crouchAction, repeatRun])
+        playerNode.run(sequence, withKey: "run")
     }
 }

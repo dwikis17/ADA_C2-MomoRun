@@ -10,8 +10,8 @@ import Foundation
 struct Config {
     // Game Scene Configurations
     static let gameMoveSpeed: Double = 5.0 // tiles per second
-    static let obstacleSpawnInterval: TimeInterval = 1.0 // seconds
-    static let playerY: Int = 1
+    static let obstacleSpawnInterval: TimeInterval = 0.7 // seconds
+    static let playerY: Int = 0
     // Motion Detector Configurations
     static let motionUpdateInterval: TimeInterval = 1.0 / 60.0 // Hz
     static let motionStillThreshold: Double = 0.05

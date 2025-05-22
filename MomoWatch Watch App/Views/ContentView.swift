@@ -80,6 +80,11 @@ struct ContentView: View {
                 sendDirection(sensorModel.directionX)
             }
         }
+        .onChange(of: sensorModel.directionZ, { 
+            if !sensorModel.directionZ.isEmpty {
+                sendDirection(sensorModel.directionZ)
+            }
+        })
         .onChange(of: watchSession.gameOver) { newValue in
             if newValue {
                 if !didPlayHaptic {
