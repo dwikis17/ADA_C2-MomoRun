@@ -24,7 +24,7 @@ final class GameSceneLab: SKScene {
     private let floorLength = 18
     private let floorWidth = 3
     private var player: SKSpriteNode?
-    private var playerY: Int = 0 // Start at row 2
+    private var playerY: Int = Config.playerY// Start at row 2
     private var obstacles: [SKSpriteNode] = []
     private var obstacleSpawnTimer: TimeInterval = 0
     private let obstacleSpawnInterval: TimeInterval = Config.obstacleSpawnInterval // seconds
