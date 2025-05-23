@@ -98,6 +98,7 @@ final class GameSceneLab: SKScene {
         let boarNode = SKSpriteNode(imageNamed: "boar_0")
         boarNode.anchorPoint = CGPoint(x: 0.5, y: 0.0)
         let boarPosition = Vector(x: -8, y: playerY, z: 3)
+        
         let screenVector = convertWorldToScreen(boarPosition)
         let xOffset: CGFloat = 40 // tweak as needed
         let yOffset: CGFloat = -8 // tweak as needed
