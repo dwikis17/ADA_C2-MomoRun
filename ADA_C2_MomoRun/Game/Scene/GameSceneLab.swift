@@ -21,7 +21,7 @@ final class GameSceneLab: SKScene {
     private let tileWidth: CGFloat = 32 // Adjust based on your tile size
     private let moveSpeed: Double = Config.gameMoveSpeed // tiles per second
     private var lastUpdateTime: TimeInterval = 0
-    private let floorLength = 18
+    private let floorLength = 40
     private let floorWidth = 3
     private var player: SKSpriteNode?
     private var playerY: Int = Config.playerY// Start at row 2
@@ -32,6 +32,7 @@ final class GameSceneLab: SKScene {
     private var isGameOver: Bool = false
     private var restartLabel: SKLabelNode?
     private var boar: SKSpriteNode?
+    private var playerZ: Int = 3 // Default ground level
     
     // Add a property to hold the WatchSessionManager instance
     private var watchSession: WatchSessionManager
@@ -75,16 +76,28 @@ final class GameSceneLab: SKScene {
     private func setupGrassTiles() {
         // Bottom border (y = -1)
         for x in -13..<floorLength {
-            let sprite = SKSpriteNode(imageNamed: "grass")
+            if x  == 5 {
+                // createTree(x: x)
+                  let sprite = SKSpriteNode(imageNamed: "grass")
             let worldPos = Vector(x: x, y: -1)
             let screenVector = convertWorldToScreen(worldPos)
             sprite.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
             sprite.zPosition = CGFloat(convertWorldToZPosition(worldPos))
             addChild(sprite)
             grassTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
+            } else {
+             let sprite = SKSpriteNode(imageNamed: "grass")
+            let worldPos = Vector(x: x, y: -1)
+            let screenVector = convertWorldToScreen(worldPos)
+            sprite.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
+            sprite.zPosition = CGFloat(convertWorldToZPosition(worldPos))
+            addChild(sprite)
+            grassTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
+            }
         }
         // Top border (y = floorWidth)
         for x in -13..<floorLength {
+        
             let sprite = SKSpriteNode(imageNamed: "grass")
             let worldPos = Vector(x: x, y: floorWidth)
             let screenVector = convertWorldToScreen(worldPos)
@@ -94,6 +107,24 @@ final class GameSceneLab: SKScene {
             grassTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
         }
     }
+
+    private func createTree(x: Int) {
+        let sprite = SKSpriteNode(imageNamed: "tree")
+        let worldPos = Vector(x: x, y: -1, z:-5)
+        let screenVector = convertWorldToScreen(worldPos)
+        
+        // Set anchor point to bottom center of the tree sprite
+        sprite.anchorPoint = CGPoint(x: 0.5, y: 0.1)
+        
+        sprite.position = CGPoint(
+            x: CGFloat(screenVector.x),
+            y: CGFloat(screenVector.y)
+        )
+        sprite.zPosition = CGFloat(convertWorldToZPosition(worldPos))
+        addChild(sprite)
+        grassTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
+    }
+
     private func createBoar() {
         let boarNode = SKSpriteNode(imageNamed: "boar_0")
         boarNode.anchorPoint = CGPoint(x: 0.5, y: 0.0)
@@ -166,7 +197,7 @@ final class GameSceneLab: SKScene {
 
     private func createTiles() {
         for y in 0..<floorWidth {
-            for x in -13..<floorLength {
+            for x in -15..<floorLength {
                 let imageName = y == 0 || y == 2 ? "tile_side" : "tile_middle"
                 let sprite = SKSpriteNode(imageNamed: imageName)
                 let worldPos = Vector(x: x, y: y)
@@ -263,13 +294,21 @@ final class GameSceneLab: SKScene {
         obstacles.removeAll()
         // Reset player position
         playerY = 1
-        updatePlayerPosition()
+        // updatePlayerPosition()
         // Reset timers and state
         obstacleSpawnTimer = 0
         isGameOver = false
         // Remove restart label if present
         restartLabel?.removeFromParent()
         restartLabel = nil
+         lastUpdateTime = 0
+       
+
+        // // Reset all 
+        // setupBackground()
+        // createTiles()
+
+
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -341,7 +380,7 @@ final class GameSceneLab: SKScene {
             obstacle.zPosition = CGFloat(zPos)
     
             // Collision check: player is always at (-3, playerY, 3)
-            if Int(round(newWorldX)) == -3 && y == playerY && z == 3 {
+            if Int(round(newWorldX)) == -3 && y == playerY && z == 3 && playerZ == 3 {
                 didCollide = true
             }
         }
@@ -388,12 +427,12 @@ final class GameSceneLab: SKScene {
         let nodes = self.nodes(at: location)
         for node in nodes {
             if node.name == "arrow_left" {
-                receiveCrouchSignal()
+                receiveJumpSignal()
             } else if node.name == "arrow_right" {
                 moveRight()
             }
         }
-    }
+    } 
 
     // Add public methods for watch control
     @objc func moveLeftFromWatch() {
@@ -411,29 +450,31 @@ final class GameSceneLab: SKScene {
         receiveCrouchSignal()
     }
 
-    private func receiveJumpSignal() {
-        guard let playerNode = player else { return }
-        // Stop current animation
-        playerNode.removeAction(forKey: "run")
-        // Prepare jump frames
-        let jumpFrames: [SKTexture] = (0..<10).map { SKTexture(imageNamed: "player_jump_\($0)") }
-        let jumpAction = SKAction.animate(with: jumpFrames, timePerFrame: 0.08, resize: false, restore: true)
-        // Simulate jump arc (move up, then down)
-        let jumpHeight: CGFloat = 30
-        let jumpDuration: TimeInterval = 0.44 // 11 * 0.08 / 2 (up and down)
-        let moveUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: jumpDuration)
-        moveUp.timingMode = .easeOut
-        let moveDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: jumpDuration)
-        moveDown.timingMode = .easeIn
-        let jumpMove = SKAction.sequence([moveUp, moveDown])
-        let group = SKAction.group([jumpAction, jumpMove])
-        // After jump, resume running
-        let runFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
-        let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
-        let repeatRun = SKAction.repeatForever(runAnimation)
-        let sequence = SKAction.sequence([group, repeatRun])
-        playerNode.run(sequence, withKey: "run")
-    }
+   private func receiveJumpSignal() {
+    guard let playerNode = player else { return }
+    playerNode.removeAction(forKey: "run")
+    let jumpFrames: [SKTexture] = (0..<10).map { SKTexture(imageNamed: "player_jump_\($0)") }
+    let jumpAction = SKAction.animate(with: jumpFrames, timePerFrame: 0.08, resize: false, restore: true)
+    let jumpHeight: CGFloat = 30
+    let jumpDuration: TimeInterval = 0.44
+    let moveUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: jumpDuration)
+    moveUp.timingMode = .easeOut
+    let moveDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: jumpDuration)
+    moveDown.timingMode = .easeIn
+    let jumpMove = SKAction.sequence([moveUp, moveDown])
+
+    // Animate z: set to 4 during jump, then back to 3
+    let setZUp = SKAction.run { [weak self] in self?.playerZ = 4 }
+    let setZDown = SKAction.run { [weak self] in self?.playerZ = 3 }
+    let zSequence = SKAction.sequence([setZUp, SKAction.wait(forDuration: jumpDuration * 2), setZDown])
+
+    let group = SKAction.group([jumpAction, jumpMove, zSequence])
+    let runFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+    let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
+    let repeatRun = SKAction.repeatForever(runAnimation)
+    let sequence = SKAction.sequence([group, repeatRun])
+    playerNode.run(sequence, withKey: "run")
+}
 
     private func receiveCrouchSignal() {
          guard let playerNode = player else { return }
