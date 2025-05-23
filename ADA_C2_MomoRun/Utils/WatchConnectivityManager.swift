@@ -15,6 +15,10 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     var onDirection: ((String) -> Void)?
     var onRestart: (() -> Void)?
     var onStart: (() -> Void)?
+    
+    // New callbacks for calorie functionality
+    var onCalorieChange: ((Int) -> Void)?
+    var onCalorieDone: (() -> Void)?
 
     override init() {
         super.init()
@@ -64,6 +68,16 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
                 self.onStart?()
                 print("Received start command")
             }
+            
+            // Handle calorie related messages
+            if let calorieValue = message["calorieValue"] as? Int {
+                self.onCalorieChange?(calorieValue)
+                print("Received calorie value: \(calorieValue)")
+            }
+            if let calorieDone = message["calorieDone"] as? Bool, calorieDone {
+                self.onCalorieDone?()
+                print("Received calorie done command")
+            }
         }
     }
     
@@ -76,6 +90,20 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         WCSession.default.sendMessage(message, replyHandler: nil) { error in
             if error != nil {
                  print("Error sending message: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // Function to tell the watch to show calorie setup UI
+    func sendShowCalorieSetup() {
+        guard WCSession.default.isReachable else {
+            print("Watch is not reachable.")
+            return
+        }
+        
+        WCSession.default.sendMessage(["showCalorieSetup": true], replyHandler: nil) { error in
+            if error != nil {
+                print("Error sending showCalorieSetup: \(error.localizedDescription)")
             }
         }
     }

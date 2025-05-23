@@ -63,6 +63,9 @@ final class MainMenuScene: SKScene {
         settingsButton.setScale(0.4) // Adjust scale as needed
         addChild(settingsButton)
         
+        // MARK: - Reset Button
+        createResetButton()
+        
         // Set up watch session start handler
         watchSession.onStart = { [weak self] in
             self?.animateBreathingGroupAndStartGame()
@@ -223,14 +226,27 @@ final class MainMenuScene: SKScene {
     }
 
     private func startGame() {
-        // Transition to the Game Scene, passing the watchSession instance
-        let gameScene = GameSceneLab(size: size, watchSession: watchSession)
-        gameScene.scaleMode = scaleMode
-        let transition = SKTransition.fade(withDuration: 0.5)
-        view?.presentScene(gameScene, transition: transition)
+        // Check if the calorie target has been set
+        if !CalorieData.shared.isTargetSet {
+            // Show calorie setup scene first
+            let calorieSetupScene = SetCaloriesScene(size: size, watchSession: watchSession)
+            calorieSetupScene.scaleMode = scaleMode
+            let transition = SKTransition.fade(withDuration: 0.5)
+            
+            // Tell the watch to show calorie setup UI
+            watchSession.sendShowCalorieSetup()
+            
+            view?.presentScene(calorieSetupScene, transition: transition)
+        } else {
+            // Transition directly to the Game Scene if calorie target is already set
+            let gameScene = GameSceneLab(size: size, watchSession: watchSession)
+            gameScene.scaleMode = scaleMode
+            let transition = SKTransition.fade(withDuration: 0.5)
+            view?.presentScene(gameScene, transition: transition)
+        }
     }
 
-    // MARK: - Touch Handling
+    // Handle touches
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
@@ -240,6 +256,22 @@ final class MainMenuScene: SKScene {
             if node.name == "settingsButton" {
                 // Handle settings button tap
                 print("Settings button tapped!") // Placeholder action
+                break
+            } else if node.name == "resetButton" || node.parent?.name == "resetButton" {
+                // Directly reset data without confirmation
+                CalorieData.shared.resetAllData()
+                
+                // Add a confirmation flash
+                let flash = SKSpriteNode(color: .red, size: CGSize(width: size.width, height: size.height))
+                flash.position = CGPoint(x: size.width/2, y: size.height/2)
+                flash.zPosition = 2000
+                flash.alpha = 0
+                addChild(flash)
+                
+                let fadeIn = SKAction.fadeAlpha(to: 0.3, duration: 0.2)
+                let fadeOut = SKAction.fadeAlpha(to: 0, duration: 0.3)
+                let sequence = SKAction.sequence([fadeIn, fadeOut, SKAction.removeFromParent()])
+                flash.run(sequence)
                 break
             }
         }
@@ -265,5 +297,40 @@ final class MainMenuScene: SKScene {
         emitter.position = CGPoint(x: size.width / 2, y: size.height / 2)
         emitter.zPosition = -0.5 // Just above the background, below everything else
         addChild(emitter)
+    }
+
+    private func createResetButton() {
+        // Create reset button container with background
+        let resetContainer = SKNode()
+        resetContainer.position = CGPoint(x: 70, y: size.height - 40)
+        resetContainer.zPosition = 100
+        addChild(resetContainer)
+        
+        // Button background (rounded rect)
+        let background = SKShapeNode(rectOf: CGSize(width: 120, height: 40), cornerRadius: 15)
+        background.fillColor = UIColor(red: 0.8, green: 0.2, blue: 0.2, alpha: 0.7)
+        background.strokeColor = .white
+        background.lineWidth = 2
+        background.zPosition = 0
+        resetContainer.addChild(background)
+        
+        // Reset text
+        let resetText = SKLabelNode(fontNamed: "Jersey15-Regular")
+        resetText.text = "RESET DATA"
+        resetText.fontSize = 16
+        resetText.fontColor = .white
+        resetText.position = CGPoint(x: 0, y: -6) // Centering adjustment
+        resetText.zPosition = 1
+        resetContainer.addChild(resetText)
+        
+        // Make the entire container interactive
+        resetContainer.name = "resetButton"
+        
+        // Add subtle hover animation
+        let scaleUp = SKAction.scale(to: 1.1, duration: 0.5)
+        let scaleDown = SKAction.scale(to: 1.0, duration: 0.5)
+        let pulse = SKAction.sequence([scaleUp, scaleDown])
+        let repeatPulse = SKAction.repeatForever(pulse)
+        resetContainer.run(repeatPulse)
     }
 } 

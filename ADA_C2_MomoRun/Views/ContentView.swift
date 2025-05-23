@@ -15,7 +15,7 @@ struct ContentView: View {
     @StateObject private var watchSession = WatchSessionManager()
     
     // Add state to control splash screen visibility
-    @State private var showingSplash = false
+    @State private var showingSplash = Config.showSplashScreen
     
     // GameSceneLab will be instantiated when the Play button is tapped
     // private var gameScene = GameSceneLab()

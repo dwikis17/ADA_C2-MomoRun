@@ -45,6 +45,7 @@
 			membershipExceptions = (
 				config.swift,
 				"Fonts/Jersey15-Regular.ttf",
+				Models/CalorieData.swift,
 			);
 			target = 6491DFFA2DDC649C00212F1C /* MomoWatch Watch App */;
 		};
