@@ -301,7 +301,7 @@ final class GameSceneLab: SKScene {
         // Remove restart label if present
         restartLabel?.removeFromParent()
         restartLabel = nil
-         lastUpdateTime = 0
+        lastUpdateTime = 0
        
 
         // // Reset all 
