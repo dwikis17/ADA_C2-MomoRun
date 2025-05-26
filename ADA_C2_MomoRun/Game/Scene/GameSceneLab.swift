@@ -76,28 +76,16 @@ final class GameSceneLab: SKScene {
     private func setupGrassTiles() {
         // Bottom border (y = -1)
         for x in -13..<floorLength {
-            if x  == 5 {
-                // createTree(x: x)
-                  let sprite = SKSpriteNode(imageNamed: "grass")
+            let sprite = SKSpriteNode(imageNamed: "grass")
             let worldPos = Vector(x: x, y: -1)
             let screenVector = convertWorldToScreen(worldPos)
             sprite.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
             sprite.zPosition = CGFloat(convertWorldToZPosition(worldPos))
             addChild(sprite)
             grassTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
-            } else {
-             let sprite = SKSpriteNode(imageNamed: "grass")
-            let worldPos = Vector(x: x, y: -1)
-            let screenVector = convertWorldToScreen(worldPos)
-            sprite.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
-            sprite.zPosition = CGFloat(convertWorldToZPosition(worldPos))
-            addChild(sprite)
-            grassTiles.append(Tile(sprite: sprite, worldPosition: worldPos, worldXOffset: Double(x)))
-            }
         }
         // Top border (y = floorWidth)
         for x in -13..<floorLength {
-        
             let sprite = SKSpriteNode(imageNamed: "grass")
             let worldPos = Vector(x: x, y: floorWidth)
             let screenVector = convertWorldToScreen(worldPos)
@@ -302,12 +290,7 @@ final class GameSceneLab: SKScene {
         restartLabel?.removeFromParent()
         restartLabel = nil
         lastUpdateTime = 0
-       
-
-        // // Reset all 
-        // setupBackground()
-        // createTiles()
-
+    
 
     }
 
