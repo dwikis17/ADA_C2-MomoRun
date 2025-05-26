@@ -54,25 +54,29 @@ final class MainMenuScene: SKScene {
     
     private func createGradientTexture() -> SKTexture {
         // Create a texture with the same gradient as splash screen
-        UIGraphicsBeginImageContext(CGSize(width: 1, height: 100))
+        // Use screen dimensions to avoid stretching issues
+        let textureSize = CGSize(width: size.width, height: size.height)
+        UIGraphicsBeginImageContext(textureSize)
         guard let context = UIGraphicsGetCurrentContext() else {
             UIGraphicsEndImageContext()
             return SKTexture()
         }
         
-        // Colors to match splash screen: black to dark blue-gray
+        // Colors to match splash screen: black at top to dark blue-gray at bottom
         let colors = [
+            UIColor(red: 0.1, green: 0.1, blue: 0.2, alpha: 1.0).cgColor,
             UIColor.black.cgColor,
-            UIColor(red: 0.1, green: 0.1, blue: 0.2, alpha: 1.0).cgColor
+            
         ]
         
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let gradient = CGGradient(colorsSpace: colorSpace, colors: colors as CFArray, locations: [0.0, 1.0])!
         
+        // Draw gradient from top to bottom (black at top, lighter at bottom)
         context.drawLinearGradient(
             gradient,
-            start: CGPoint(x: 0, y: 100),
-            end: CGPoint(x: 0, y: 0),
+            start: CGPoint(x: 0, y: textureSize.height), // Top of screen
+            end: CGPoint(x: 0, y: 0), // Bottom of screen
             options: []
         )
         
@@ -144,7 +148,7 @@ final class MainMenuScene: SKScene {
             self.createSettingsButton()
             
             // Add reset button
-            self.createResetButton()
+            // self.createResetButton()
             
             // Set up watch session start handler
             self.watchSession.onStart = { [weak self] in

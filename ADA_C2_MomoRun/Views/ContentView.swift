@@ -16,6 +16,7 @@ struct ContentView: View {
     
     // Add state to control splash screen visibility
     @State private var showingSplash = Config.showSplashScreen
+    @State private var showingBlackTransition = false
     
     // GameSceneLab will be instantiated when the Play button is tapped
     // private var gameScene = GameSceneLab()
@@ -24,31 +25,52 @@ struct ContentView: View {
         ZStack {
             // Main content
             if !showingSplash {
-                GeometryReader { geometry in
-                    SpriteView(scene: MainMenuScene(size: geometry.size, watchSession: watchSession))
-                        .ignoresSafeArea()
-                }
-                
-                // Watch Connection Status Indicator (SwiftUI)
-                Circle()
-                    .fill(watchSession.isReachable ? Color.green : Color.red)
-                    .frame(width: 20, height: 20)
-                    .padding(.top, 20)
-                    .padding(.leading, 20)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                // Main Menu Scene
+                SpriteView(scene: createMainMenuScene())
+                    .ignoresSafeArea()
             } else {
                 // Splash Screen
                 SplashScreenView()
             }
+            
+            // Black transition overlay
+            if showingBlackTransition {
+                Color.black
+                    .ignoresSafeArea()
+                    .zIndex(1000)
+            }
         }
         .onAppear {
-            // Hide splash screen after 3 seconds
+            // Start transition sequence after 3 seconds
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                withAnimation {
-                    showingSplash = false
+                startFadeToBlackTransition()
+            }
+        }
+    }
+    
+    private func startFadeToBlackTransition() {
+        // Step 1: Fade to black
+        withAnimation(.easeInOut(duration: 0.5)) {
+            showingBlackTransition = true
+        }
+        
+        // Step 2: After black screen is shown, hide splash and show main menu
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            showingSplash = false
+            
+            // Step 3: Fade out from black to reveal main menu
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    showingBlackTransition = false
                 }
             }
         }
+    }
+    
+    private func createMainMenuScene() -> MainMenuScene {
+        let scene = MainMenuScene(size: CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height), watchSession: watchSession)
+        scene.scaleMode = .aspectFill
+        return scene
     }
 }
 

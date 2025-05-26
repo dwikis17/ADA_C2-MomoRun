@@ -48,9 +48,13 @@ struct SplashScreenView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Dark gradient background
+                // Black background
+                Color.black
+                    .edgesIgnoringSafeArea(.all)
+                
+                // Dark gradient overlay
                 LinearGradient(
-                    gradient: Gradient(colors: [Color.black, Color(red: 0.1, green: 0.1, blue: 0.2)]),
+                    gradient: Gradient(colors: [Color.clear, Color(red: 0.1, green: 0.1, blue: 0.2)]),
                     startPoint: .top,
                     endPoint: .bottom
                 )
