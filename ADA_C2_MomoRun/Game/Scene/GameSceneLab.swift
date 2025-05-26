@@ -458,7 +458,6 @@ final class GameSceneLab: SKScene {
     let sequence = SKAction.sequence([group, repeatRun])
     playerNode.run(sequence, withKey: "run")
 }
-
     private func receiveCrouchSignal() {
          guard let playerNode = player else { return }
         // Stop current animation
