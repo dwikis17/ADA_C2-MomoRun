@@ -24,10 +24,14 @@ struct ContentView: View {
         ZStack {
             // Main content
             if !showingSplash {
-                GeometryReader { geometry in
-                    SpriteView(scene: MainMenuScene(size: geometry.size, watchSession: watchSession))
-                        .ignoresSafeArea()
-                }
+//                GeometryReader { geometry in
+//                    SpriteView(scene: MainMenuScene(size: geometry.size, watchSession: watchSession))
+//                        .ignoresSafeArea()
+//                }
+
+                SpriteView(scene: GameSceneLab(size: CGSize(width: 100, height: 100), watchSession: watchSession))
+                    .ignoresSafeArea()
+                    
                 
                 // Watch Connection Status Indicator (SwiftUI)
                 Circle()
