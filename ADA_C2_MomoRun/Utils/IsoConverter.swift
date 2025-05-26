@@ -17,7 +17,7 @@ struct Vector {
         self.x = x
         self.y = y
         self.z = z
-    }
+    }   
     
     init(x:Int, y:Int) {
         self.init(x: x, y: y, z: 0)
