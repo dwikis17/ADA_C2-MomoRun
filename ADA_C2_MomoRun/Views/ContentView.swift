@@ -26,16 +26,10 @@ struct ContentView: View {
             // Main content
             if !showingSplash {
                GeometryReader { geometry in
-                   SpriteView(scene: MainMenuScene(size: geometry.size, watchSession: watchSession))
+                   SpriteView(scene: SetCaloriesScene(size: geometry.size, watchSession: watchSession))
                        .ignoresSafeArea()
                }
                 // Watch Connection Status Indicator (SwiftUI)
-                Circle()
-                    .fill(watchSession.isReachable ? Color.green : Color.red)
-                    .frame(width: 20, height: 20)
-                    .padding(.top, 20)
-                    .padding(.leading, 20)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             } else {
                 // Splash Screen
                 SplashScreenView()
