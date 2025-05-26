@@ -35,194 +35,162 @@ final class MainMenuScene: SKScene {
         size = view.frame.size
         scaleMode = .aspectFill
 
-        addBackgroundParticles() // Add subtle background particles
-
-        // MARK: - Background (Pixel Art Sky with Trees)
+        // Create gradient background to match splash screen
+        createGradientBackground()
+        
+        // Create the intro animation sequence
+        createIntroSequence()
+    }
+    
+    private func createGradientBackground() {
+        // Create a gradient background that matches the splash screen
+        let gradientTexture = createGradientTexture()
+        let gradientBackground = SKSpriteNode(texture: gradientTexture)
+        gradientBackground.position = CGPoint(x: size.width / 2, y: size.height / 2)
+        gradientBackground.size = size
+        gradientBackground.zPosition = -2 // Behind everything else
+        addChild(gradientBackground)
+    }
+    
+    private func createGradientTexture() -> SKTexture {
+        // Create a texture with the same gradient as splash screen
+        UIGraphicsBeginImageContext(CGSize(width: 1, height: 100))
+        guard let context = UIGraphicsGetCurrentContext() else {
+            UIGraphicsEndImageContext()
+            return SKTexture()
+        }
+        
+        // Colors to match splash screen: black to dark blue-gray
+        let colors = [
+            UIColor.black.cgColor,
+            UIColor(red: 0.1, green: 0.1, blue: 0.2, alpha: 1.0).cgColor
+        ]
+        
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        let gradient = CGGradient(colorsSpace: colorSpace, colors: colors as CFArray, locations: [0.0, 1.0])!
+        
+        context.drawLinearGradient(
+            gradient,
+            start: CGPoint(x: 0, y: 100),
+            end: CGPoint(x: 0, y: 0),
+            options: []
+        )
+        
+        let image = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        
+        return SKTexture(image: image!)
+    }
+    
+    private func createIntroSequence() {
+        // 1. Create but hide background initially
         let backgroundTexture = SKTexture(imageNamed: "main-background")
         let backgroundNode = SKSpriteNode(texture: backgroundTexture)
-        backgroundNode.position = CGPoint(x: size.width / 2, y: size.height / 2)
-        // Scale background to fill the screen while maintaining aspect ratio
+        backgroundNode.position = CGPoint(x: (size.width / 2), y: (size.height / 2))
         let scale = max(size.width / backgroundNode.size.width, size.height / backgroundNode.size.height)
         backgroundNode.setScale(scale)
-        backgroundNode.zPosition = -1 // Ensure it's behind other elements
+        backgroundNode.zPosition = -1
+        backgroundNode.alpha = 0 // Hide initially
         addChild(backgroundNode)
-
-        // MARK: - Game Title
-        createGameTitle()
         
-        // MARK: - Play Button Instruction
-        createPlayButtonInstruction()
+        // 2. Create logo at center of screen, larger initially
+        let logoTexture = SKTexture(imageNamed: "momo-run-logo")
+        let logoNode = SKSpriteNode(texture: logoTexture)
+        logoNode.position = CGPoint(x: size.width / 2, y: size.height / 2) // Center of screen
+        logoNode.setScale(1.2) // Start larger
+        logoNode.alpha = 0 // Hidden initially
+        logoNode.zPosition = 10
+        addChild(logoNode)
         
-        // MARK: - Settings Button
-        let settingsButtonTexture = SKTexture(imageNamed: "settings-button")
+        // 3. Sequence of animations
+        
+        // Logo fade in
+        let logoFadeIn = SKAction.fadeIn(withDuration: 1.2)
+        
+        // Logo move and scale to final position
+        let logoFinalPosition = CGPoint(x: ((size.width / 2) - 15), y: size.height / 2 + 20)
+        let logoMove = SKAction.move(to: logoFinalPosition, duration: 0.8)
+        let logoScale = SKAction.scale(to: 0.85, duration: 0.8)
+        let logoMoveAndScale = SKAction.group([logoMove, logoScale])
+        
+        // Background fade in
+        let bgFadeIn = SKAction.fadeIn(withDuration: 0.8)
+        
+        // Create the sequence for the logo
+        let logoSequence = SKAction.sequence([
+            logoFadeIn,
+            SKAction.wait(forDuration: 0.3),
+            logoMoveAndScale
+        ])
+        
+        // Run animations
+        logoNode.run(logoSequence)
+        
+        // Wait for logo to finish moving, then fade in background and add other elements
+        let waitForLogo = SKAction.wait(forDuration: 2.3) // Matches total logo animation time
+        let addElements = SKAction.run { [weak self] in
+            guard let self = self else { return }
+            
+            // Fade in background
+            backgroundNode.run(bgFadeIn)
+            
+            // Add background particles
+            self.addBackgroundParticles()
+            
+            // Add play button
+            self.createPlayButton()
+            
+            // Add settings button
+            self.createSettingsButton()
+            
+            // Add reset button
+            self.createResetButton()
+            
+            // Set up watch session start handler
+            self.watchSession.onStart = { [weak self] in
+                self?.startGame()
+            }
+        }
+        
+        let finalSequence = SKAction.sequence([waitForLogo, addElements])
+        run(finalSequence)
+    }
+    
+    private func createSettingsButton() {
+        let settingsButtonTexture = SKTexture(imageNamed: "set-goal-button")
         let settingsButton = SKSpriteNode(texture: settingsButtonTexture)
-        // Position in top right with some padding
         let padding: CGFloat = 40
-        settingsButton.position = CGPoint(x: size.width - padding, y: size.height - padding)
-        settingsButton.name = "settingsButton" // Assign a name for touch detection
-        settingsButton.setScale(0.4) // Adjust scale as needed
+        settingsButton.position = CGPoint(x: size.width - padding - 50, y: size.height - padding - 20)
+        settingsButton.name = "settingsButton"
+        settingsButton.setScale(0.9)
+        settingsButton.zPosition = 10
         addChild(settingsButton)
-        
-        // MARK: - Reset Button
-        createResetButton()
-        
-        // Set up watch session start handler
-        watchSession.onStart = { [weak self] in
-            self?.animateBreathingGroupAndStartGame()
-        }
     }
-    
-    private func createGameTitle() {
-        
-        // Add subtle floating animation to the title
-        let moveUp = SKAction.moveBy(x: 0, y: 10, duration: 2.0)
-        moveUp.timingMode = .easeInEaseOut
-        let moveDown = SKAction.moveBy(x: 0, y: -10, duration: 2.0)
-        moveDown.timingMode = .easeInEaseOut
-        let sequence = SKAction.sequence([moveUp, moveDown])
-        let repeatForever = SKAction.repeatForever(sequence)
-        
-    }
-    
-    private func createPlayButtonInstruction() {
-        // Remove previous group if any
-        breathingGroup?.removeFromParent()
-        breathingParticles?.removeFromParent()
-        let group = SKNode()
-        group.zPosition = 10
-        breathingGroup = group
-        // Set group position to play button center
-        let groupCenter = CGPoint(x: (size.width / 2) + 15, y: (size.height * 0.4) + 15)
-        group.position = groupCenter
-        addChild(group)
 
-        // Create stroke color from #471715
-        let strokeColor = UIColor(red: 71/255.0, green: 23/255.0, blue: 21/255.0, alpha: 1.0)
-        let kTextFontSize: CGFloat = 48
-        // --- Press ---
-        let pressPos = CGPoint(x: (size.width / 2 - 100) - groupCenter.x, y: (size.height * 0.4) - groupCenter.y)
-        for xOffset in [-2, 2] {
-            for yOffset in [-2, 2] {
-                let shadow = SKLabelNode(fontNamed: "Jersey15-Regular")
-                shadow.text = "Press"
-                shadow.fontSize = kTextFontSize
-                shadow.fontColor = strokeColor
-                shadow.position = CGPoint(x: pressPos.x + CGFloat(xOffset), y: pressPos.y + CGFloat(yOffset))
-                shadow.zPosition = 9
-                group.addChild(shadow)
-            }
-        }
-        let pressLabel = SKLabelNode(fontNamed: "Jersey15-Regular")
-        pressLabel.text = "Press"
-        pressLabel.fontSize = kTextFontSize
-        pressLabel.fontColor = .white
-        pressLabel.position = pressPos
-        pressLabel.zPosition = 10
-        group.addChild(pressLabel)
-        // --- Play Button ---
-        let playButton = SKSpriteNode(imageNamed: "play-button")
-        playButton.setScale(0.4)
-        playButton.position = .zero // Center of group
+    private func createPlayButton() {
+        // Create play button using the asset
+        let playButton = SKSpriteNode(imageNamed: "press-play-to-start")
+        playButton.name = "playButton"
+        playButton.position = CGPoint(x: size.width / 2, y: size.height / 2 - 100) // Position below logo
         playButton.zPosition = 10
-        group.addChild(playButton)
-        // --- on ---
-        let onPos = CGPoint(x: (size.width / 2 + 100) - groupCenter.x, y: (size.height * 0.4) - groupCenter.y)
-        for xOffset in [-2, 2] {
-            for yOffset in [-2, 2] {
-                let shadow = SKLabelNode(fontNamed: "Jersey15-Regular")
-                shadow.text = "on"
-                shadow.fontSize = kTextFontSize
-                shadow.fontColor = strokeColor
-                shadow.position = CGPoint(x: onPos.x + CGFloat(xOffset), y: onPos.y + CGFloat(yOffset))
-                shadow.zPosition = 9
-                group.addChild(shadow)
-            }
-        }
-        let onLabel = SKLabelNode(fontNamed: "Jersey15-Regular")
-        onLabel.text = "on"
-        onLabel.fontSize = kTextFontSize
-        onLabel.fontColor = .white
-        onLabel.position = onPos
-        onLabel.zPosition = 10
-        group.addChild(onLabel)
-        // --- your Apple Watch ---
-        let watchPos = CGPoint(x: (size.width / 2) - groupCenter.x, y: (size.height * 0.28) - groupCenter.y)
-        for xOffset in [-2, 2] {
-            for yOffset in [-2, 2] {
-                let shadow = SKLabelNode(fontNamed: "Jersey15-Regular")
-                shadow.text = "your Apple Watch"
-                shadow.fontSize = kTextFontSize
-                shadow.fontColor = strokeColor
-                shadow.position = CGPoint(x: watchPos.x + CGFloat(xOffset), y: watchPos.y + CGFloat(yOffset))
-                shadow.zPosition = 9
-                group.addChild(shadow)
-            }
-        }
-        let watchLabel = SKLabelNode(fontNamed: "Jersey15-Regular")
-        watchLabel.text = "your Apple Watch"
-        watchLabel.fontSize = kTextFontSize
-        watchLabel.fontColor = .white
-        watchLabel.position = watchPos
-        watchLabel.zPosition = 10
-        group.addChild(watchLabel)
-
-        // Add breathing animation to the group (subtle)
-        let breatheUp = SKAction.scale(to: 1.03, duration: 1.1)
+        playButton.setScale(0.8)
+        playButton.alpha = 0 // Start invisible
+        addChild(playButton)
+        
+        // Fade in the button
+        let fadeIn = SKAction.fadeIn(withDuration: 0.5)
+        
+        // Add breathing animation effect
+        let breatheUp = SKAction.scale(to: 0.85, duration: 1.2)
         breatheUp.timingMode = .easeInEaseOut
-        let breatheDown = SKAction.scale(to: 0.97, duration: 1.1)
+        let breatheDown = SKAction.scale(to: 0.75, duration: 1.2)
         breatheDown.timingMode = .easeInEaseOut
         let breatheSequence = SKAction.sequence([breatheUp, breatheDown])
         let breatheForever = SKAction.repeatForever(breatheSequence)
-        group.run(breatheForever, withKey: "breathing")
-
-        // Add particles (simple sparkle effect)
-        if let particles = makeBreathingParticles() {
-            particles.position = CGPoint(x: 0, y: (size.height * 0.36) - groupCenter.y)
-            particles.zPosition = 20
-            group.addChild(particles)
-            breathingParticles = particles
-        }
-    }
-    
-    private func makeBreathingParticles() -> SKEmitterNode? {
-        let emitter = SKEmitterNode()
-        emitter.particleTexture = SKTexture(imageNamed: "sparkle") // Add a small white sparkle asset
-        emitter.particleBirthRate = 8
-        emitter.particleLifetime = 1.2
-        emitter.particlePositionRange = CGVector(dx: 220, dy: 60)
-        emitter.particleSpeed = 18
-        emitter.particleSpeedRange = 10
-        emitter.particleAlpha = 0.7
-        emitter.particleAlphaRange = 0.2
-        emitter.particleAlphaSpeed = -0.6
-        emitter.particleScale = 0.1
-        emitter.particleScaleRange = 0.08
-        emitter.particleScaleSpeed = -0.12
-        emitter.particleColor = .white
-        emitter.particleColorBlendFactor = 1.0
-        emitter.particleBlendMode = .add
-        emitter.emissionAngleRange = .pi * 2
-        return emitter
-    }
-
-    private func animateBreathingGroupAndStartGame() {
-        guard let group = breathingGroup else {
-            startGame()
-            return
-        }
-        // Stop breathing
-        group.removeAction(forKey: "breathing")
-        // Animate: scale up and fade out
-        let scaleUp = SKAction.scale(to: 1.25, duration: 0.35)
-        let fadeOut = SKAction.fadeOut(withDuration: 0.35)
-        let groupAnim = SKAction.group([scaleUp, fadeOut])
-        group.run(groupAnim) { [weak self] in
-            group.removeFromParent()
-            self?.breathingParticles?.removeFromParent()
-            self?.startGame()
-        }
-        // Animate particles fade out
-        breathingParticles?.run(SKAction.fadeOut(withDuration: 0.35))
+        
+        // Run fade in, then start breathing
+        let sequence = SKAction.sequence([fadeIn, breatheForever])
+        playButton.run(sequence)
     }
 
     private func startGame() {
@@ -246,7 +214,7 @@ final class MainMenuScene: SKScene {
         }
     }
 
-    // Handle touches
+    // Update touch handling for the new play button
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
@@ -272,6 +240,16 @@ final class MainMenuScene: SKScene {
                 let fadeOut = SKAction.fadeAlpha(to: 0, duration: 0.3)
                 let sequence = SKAction.sequence([fadeIn, fadeOut, SKAction.removeFromParent()])
                 flash.run(sequence)
+                break
+            } else if node.name == "playButton" {
+                // Start the game when play button is tapped
+                let scaleUp = SKAction.scale(to: 1.15, duration: 0.15)
+                let scaleDown = SKAction.scale(to: 1.0, duration: 0.15)
+                let clickSequence = SKAction.sequence([scaleUp, scaleDown])
+                
+                node.run(clickSequence) { [weak self] in
+                    self?.startGame()
+                }
                 break
             }
         }
