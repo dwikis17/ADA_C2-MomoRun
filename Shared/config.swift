@@ -9,7 +9,7 @@ import Foundation
 
 struct Config {
     // Game Scene Configurations
-    static let gameMoveSpeed: Double = 38.0 // tiles per second
+    static let gameMoveSpeed: Double = 5.0 // tiles per second
     static let obstacleSpawnInterval: TimeInterval = 0.7 // seconds
     static let playerY: Int = 0
     static let showSplashScreen: Bool = false
