@@ -181,8 +181,10 @@ struct ContentView: View {
                 Button(action: { 
                     if sensorModel.isFetching {
                         sensorModel.stopFetchingSensorData()
+                        healthStore.stopWorkout()
                     } else {
                         sensorModel.startFetchingSensorData()
+                        healthStore.startWorkout()
                         self.caloriesBurned = 0.0 // Reset calorie every start a new fetch
                         self.heartRate = 0 // Reset heart rate every start a new fetch
                         
