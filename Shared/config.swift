@@ -22,5 +22,6 @@ struct Config {
     static let motionLeftThreshold: Double = 0.1 // velX threshold
     static let motionRightThreshold: Double = -0.1 // velX threshold
     static let motionDebounceTime: TimeInterval = 0.75 // seconds between movements
+    static let getHealthStoreData: Bool = true // Fetch and show health store data from health kit
 }
 
