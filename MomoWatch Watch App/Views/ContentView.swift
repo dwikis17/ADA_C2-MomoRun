@@ -51,6 +51,13 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             showCalorieSetup = false
         }
     }
+    
+    // Send direction command to the phone
+    func sendCalorieDirection(_ direction: String) {
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(["calorieDirection": direction], replyHandler: nil)
+        }
+    }
 }
 
 struct ContentView: View {
@@ -83,9 +90,13 @@ struct ContentView: View {
                             isContinuous: false,
                             isHapticFeedbackEnabled: true
                         )
-                        .onChange(of: calorieValue) { newValue in
-                            // Send updated value to phone
-                            watchSession.sendCalorieValue(Int(newValue))
+                        .onChange(of: calorieValue) { oldValue, newValue in
+                            // Send direction command instead of actual value
+                            if newValue > oldValue {
+                                watchSession.sendCalorieDirection("up")
+                            } else if newValue < oldValue {
+                                watchSession.sendCalorieDirection("down")
+                            }
                         }
                     
                     Text("KCAL")

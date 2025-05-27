@@ -148,7 +148,7 @@ final class MainMenuScene: SKScene {
             self.createSettingsButton()
             
             // Add reset button
-            // self.createResetButton()
+            self.createResetButton()
             
             // Set up watch session start handler
             self.watchSession.onStart = { [weak self] in
@@ -185,9 +185,9 @@ final class MainMenuScene: SKScene {
         let fadeIn = SKAction.fadeIn(withDuration: 0.5)
         
         // Add breathing animation effect
-        let breatheUp = SKAction.scale(to: 0.85, duration: 1.2)
+        let breatheUp = SKAction.scale(to: 0.82, duration: 1.2)
         breatheUp.timingMode = .easeInEaseOut
-        let breatheDown = SKAction.scale(to: 0.75, duration: 1.2)
+        let breatheDown = SKAction.scale(to: 0.78, duration: 1.2)
         breatheDown.timingMode = .easeInEaseOut
         let breatheSequence = SKAction.sequence([breatheUp, breatheDown])
         let breatheForever = SKAction.repeatForever(breatheSequence)

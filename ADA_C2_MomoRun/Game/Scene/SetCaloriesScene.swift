@@ -33,11 +33,14 @@ class SetCaloriesScene: SKScene {
         backgroundNode.zPosition = -1
         addChild(backgroundNode)
         
+        // Initialize calorie value
+        calorieValue = 500 // Default starting value
+        
         setupUI()
         
-        // Setup watch session handler for calorie changes
-        watchSession.onCalorieChange = { [weak self] value in
-            self?.updateCalorieValue(value)
+        // Setup watch session handler for calorie direction changes
+        watchSession.onCalorieDirection = { [weak self] direction in
+            self?.handleCalorieDirection(direction)
         }
         
         // Setup watch session handler for done button
@@ -128,7 +131,7 @@ class SetCaloriesScene: SKScene {
         
         // Add calorie value label
         calorieLabel = SKLabelNode(fontNamed: "Jersey15-Regular")
-        calorieLabel?.text = "0 KCAL"
+        calorieLabel?.text = "\(calorieValue) KCAL"
         calorieLabel?.fontSize = 40
         calorieLabel?.fontColor = UIColor(red: 71/255.0, green: 23/255.0, blue: 21/255.0, alpha: 1.0)
         calorieLabel?.position = CGPoint(x: size.width / 2, y: size.height / 2 - 50)
@@ -171,10 +174,23 @@ class SetCaloriesScene: SKScene {
         addStrokeToText(finishedLabel)
     }
     
-    // Update the calorie value based on watch input
-    func updateCalorieValue(_ value: Int) {
-        calorieValue = value
-        calorieLabel?.text = "\(value) KCAL"
+    // Handle calorie direction changes from watch
+    private func handleCalorieDirection(_ direction: String) {
+        let increment = 50 // Calorie increment/decrement amount
+        
+        if direction == "up" {
+            calorieValue = min(calorieValue + increment, 5000) // Max 5000 calories
+        } else if direction == "down" {
+            calorieValue = max(calorieValue - increment, 0) // Min 0 calories
+        }
+        
+        // Update the display
+        updateCalorieDisplay()
+    }
+    
+    // Update the calorie display
+    private func updateCalorieDisplay() {
+        calorieLabel?.text = "\(calorieValue) KCAL"
     }
     
     // Save the calorie target and transition to the game
@@ -182,11 +198,11 @@ class SetCaloriesScene: SKScene {
         // Save the calorie target to the shared model
         CalorieData.shared.setTarget(calorieValue)
         
-        // Transition to game scene
-        let gameScene = GameSceneLab(size: size, watchSession: watchSession)
-        gameScene.scaleMode = scaleMode
+        // Transition to loading scene first
+        let loadingScene = LoadingScene(size: size, watchSession: watchSession)
+        loadingScene.scaleMode = scaleMode
         let transition = SKTransition.fade(withDuration: 0.5)
-        view?.presentScene(gameScene, transition: transition)
+        view?.presentScene(loadingScene, transition: transition)
     }
     
     // Handle touches

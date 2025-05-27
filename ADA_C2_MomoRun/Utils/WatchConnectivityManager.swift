@@ -17,7 +17,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     var onStart: (() -> Void)?
     
     // New callbacks for calorie functionality
-    var onCalorieChange: ((Int) -> Void)?
+    var onCalorieDirection: ((String) -> Void)?
     var onCalorieDone: (() -> Void)?
 
     override init() {
@@ -70,9 +70,9 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             }
             
             // Handle calorie related messages
-            if let calorieValue = message["calorieValue"] as? Int {
-                self.onCalorieChange?(calorieValue)
-                print("Received calorie value: \(calorieValue)")
+            if let calorieDirection = message["calorieDirection"] as? String {
+                self.onCalorieDirection?(calorieDirection)
+                print("Received calorie direction: \(calorieDirection)")
             }
             if let calorieDone = message["calorieDone"] as? Bool, calorieDone {
                 self.onCalorieDone?()
