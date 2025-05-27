@@ -48,20 +48,6 @@
 			);
 			target = 6491DFFA2DDC649C00212F1C /* MomoWatch Watch App */;
 		};
-		C690CB762DDF14C500950AF6 /* Exceptions for "ADA_C2_MomoRun" folder in "ADA_C2_MomoRun" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"ADA-C2-MomoRun-Info.plist",
-			);
-			target = 64365D752DD70AC600EC79D5 /* ADA_C2_MomoRun */;
-		};
-		C690CB782DDF164100950AF6 /* Exceptions for "MomoWatch Watch App" folder in "MomoWatch Watch App" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				"MomoWatch-Watch-App-Info.plist",
-			);
-			target = 6491DFFA2DDC649C00212F1C /* MomoWatch Watch App */;
-		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,17 +61,11 @@
 		};
 		64365D782DD70AC600EC79D5 /* ADA_C2_MomoRun */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				C690CB762DDF14C500950AF6 /* Exceptions for "ADA_C2_MomoRun" folder in "ADA_C2_MomoRun" target */,
-			);
 			path = ADA_C2_MomoRun;
 			sourceTree = "<group>";
 		};
 		6491DFFC2DDC649C00212F1C /* MomoWatch Watch App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				C690CB782DDF164100950AF6 /* Exceptions for "MomoWatch Watch App" folder in "MomoWatch Watch App" target */,
-			);
 			path = "MomoWatch Watch App";
 			sourceTree = "<group>";
 		};
@@ -443,6 +423,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "MomoWatch Watch App/MomoWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MomoWatch Watch App/Preview Content\"";
@@ -476,6 +457,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "MomoWatch Watch App/MomoWatch Watch App.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MomoWatch Watch App/Preview Content\"";
