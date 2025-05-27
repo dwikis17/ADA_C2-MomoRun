@@ -8,6 +8,9 @@
 import HealthKit
 
 class HealthStore: ObservableObject {
+    
+    private var workoutSession: HKWorkoutSession?
+    private var workoutBuilder: HKLiveWorkoutBuilder?
 
     let healthStore = HKHealthStore()
 
@@ -16,6 +19,30 @@ class HealthStore: ObservableObject {
         HKQuantityType(.heartRate)
     ]
     
+    func startWorkout() {
+        guard workoutSession == nil else { return }
+        let configuration = HKWorkoutConfiguration()
+        
+        configuration.activityType = .other
+        configuration.locationType = .indoor
+        
+        do {
+            workoutSession = try HKWorkoutSession(healthStore: healthStore, configuration: configuration)
+            workoutBuilder = workoutSession?.associatedWorkoutBuilder()
+            workoutBuilder?.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: configuration)
+            workoutSession?.startActivity(with: Date())
+            workoutBuilder?.beginCollection(withStart: Date(), completion: {_,_ in })
+        } catch {
+            print("Failed to start workout session: \(error.localizedDescription)")
+        }
+    }
+    
+    func stopWorkout() {
+        workoutSession?.end()
+        workoutBuilder?.endCollection(withEnd: Date(), completion: {_,_ in })
+        workoutSession = nil
+        workoutBuilder = nil        
+    }
     
     func requestHealthData() async {
         do {
