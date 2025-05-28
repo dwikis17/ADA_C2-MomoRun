@@ -13,6 +13,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var status: String = ""
     @Published var gameOver: Bool = false
     @Published var showCalorieSetup: Bool = false
+    @Published var currentScreen: String = "mainMenu" // Track current phone screen
     
     override init() {
         super.init()
@@ -34,6 +35,29 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             if let showCalorieSetup = message["showCalorieSetup"] as? Bool, showCalorieSetup {
                 self.showCalorieSetup = true
             }
+            
+            // Handle screen synchronization
+            if let screenType = message["screenType"] as? String {
+                self.currentScreen = screenType
+                
+                // Update specific states based on screen type
+                switch screenType {
+                case "mainMenu":
+                    self.showCalorieSetup = false
+                    self.gameOver = false
+                case "calorieSetup":
+                    self.showCalorieSetup = true
+                    self.gameOver = false
+                case "loading", "game":
+                    self.showCalorieSetup = false
+                    self.gameOver = false
+                case "gameOver":
+                    self.showCalorieSetup = false
+                    self.gameOver = true
+                default:
+                    break
+                }
+            }
         }
     }
     
@@ -49,6 +73,13 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         if WCSession.default.isReachable {
             WCSession.default.sendMessage(["calorieDone": true], replyHandler: nil)
             showCalorieSetup = false
+        }
+    }
+    
+    // Send direction command to the phone
+    func sendCalorieDirection(_ direction: String) {
+        if WCSession.default.isReachable {
+            WCSession.default.sendMessage(["calorieDirection": direction], replyHandler: nil)
         }
     }
 }
@@ -73,8 +104,35 @@ struct ContentView: View {
                 .aspectRatio(contentMode: .fill)
                 .edgesIgnoringSafeArea(.all)
             
-            // Calorie setup view
-            if watchSession.showCalorieSetup {
+            // Show different views based on current phone screen
+            switch watchSession.currentScreen {
+            case "mainMenu":
+                // Main menu view
+                VStack(spacing: 15) {
+                    Text("MomoRun")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                    
+                    Text("Ready to Play!")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Button("Start Game") {
+                        if WCSession.default.isReachable {
+                            WCSession.default.sendMessage(["start": true], replyHandler: nil)
+                            gameStarted = true
+                            sensorModel.startFetchingSensorData()
+                        }
+                    }
+                    .font(.headline)
+                    .padding()
+                    .background(Color.blue.opacity(0.8))
+                    .cornerRadius(10)
+                    .foregroundColor(.white)
+                }
+                
+            case "calorieSetup":
+                // Calorie setup view
                 VStack(spacing: 10) {
                     Text("\(Int(calorieValue))")
                         .font(.system(size: 40, weight: .bold))
@@ -89,9 +147,13 @@ struct ContentView: View {
                             isContinuous: false,
                             isHapticFeedbackEnabled: true
                         )
-                        .onChange(of: calorieValue) { newValue in
-                            // Send updated value to phone
-                            watchSession.sendCalorieValue(Int(newValue))
+                        .onChange(of: calorieValue) { oldValue, newValue in
+                            // Send direction command instead of actual value
+                            if newValue > oldValue {
+                                watchSession.sendCalorieDirection("up")
+                            } else if newValue < oldValue {
+                                watchSession.sendCalorieDirection("down")
+                            }
                         }
                     
                     Text("KCAL")
@@ -109,65 +171,28 @@ struct ContentView: View {
                     // Initialize to 500 when view appears
                     calorieValue = 500.0
                 }
-            } 
-            // Game over view
-            else if watchSession.gameOver {
-                Text("Game Over")
-                    .font(.custom("Jersey15-Regular", size:40))
-                    .foregroundColor(.red)
-                    .padding()
-                HStack (spacing: 30) {
-                        HStack {
-                            Image(systemName: "flame.fill")
-                            Text("\(caloriesBurned, specifier: "%.1f") kcal")
-                        }
-                        HStack {
-                            Image(systemName: "heart.fill")
-                            Text("\(heartRate)")
-                        }
-                    }
-                Button(action : {
-                    watchSession.gameOver = false
-                    watchSession.status = ""
-                    didPlayHaptic = false
-                    sensorModel.startFetchingSensorData()
-                    if WCSession.default.isReachable {
-                        WCSession.default.sendMessage(["restart": true], replyHandler: nil)
-                        // Immediately start the game after retry
-                        WCSession.default.sendMessage(["start": true], replyHandler: nil)
-                        gameStarted = true
-                    }
-                }) {
-                    Image(.retryBtn)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                }
-                .buttonStyle(.plain)
-                .frame(width: 150)
-            } 
-            // Start game view
-            else if !gameStarted {
-                // Start Game button when game hasn't started yet
-                Text("MomoRun")
-                    .font(.title3)
-                    .padding(.bottom, 5)
                 
-                Button("Start Game") {
-                    if WCSession.default.isReachable {
-                        WCSession.default.sendMessage(["start": true], replyHandler: nil)
-                        gameStarted = true
-                        sensorModel.startFetchingSensorData()
-                    }
+            case "loading":
+                // Loading view
+                VStack(spacing: 15) {
+                    Text("Loading...")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                    
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(1.5)
                 }
-                .font(.headline)
-                .padding()
-                .background(Color.blue.opacity(0.8))
-                .cornerRadius(10)
-                .foregroundColor(.white)
-            } 
-            // Game controls view
-            else {
-                VStack (spacing: 10) {
+                
+            case "gameOver":
+                // Game over view
+                VStack(spacing: 15) {
+                    Text("Game Over")
+                        .font(.custom("Jersey15-Regular", size:40))
+                        .foregroundColor(.red)
+                        .padding()
+                    
+                    HStack (spacing: 30) {
                         HStack {
                             Image(systemName: "flame.fill")
                             Text("\(caloriesBurned, specifier: "%.1f") kcal")
@@ -177,6 +202,40 @@ struct ContentView: View {
                             Text("\(heartRate)")
                         }
                     }
+                    
+                    Button(action : {
+                        watchSession.gameOver = false
+                        watchSession.status = ""
+                        didPlayHaptic = false
+                        sensorModel.startFetchingSensorData()
+                        if WCSession.default.isReachable {
+                            WCSession.default.sendMessage(["restart": true], replyHandler: nil)
+                            // Immediately start the game after retry
+                            WCSession.default.sendMessage(["start": true], replyHandler: nil)
+                            gameStarted = true
+                        }
+                    }) {
+                        Image(.retryBtn)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(width: 150)
+                }
+                
+            case "game":
+                // Game controls view
+                VStack (spacing: 10) {
+                    HStack {
+                        Image(systemName: "flame.fill")
+                        Text("\(caloriesBurned, specifier: "%.1f") kcal")
+                    }
+                    HStack {
+                        Image(systemName: "heart.fill")
+                        Text("\(heartRate)")
+                    }
+                }
+                
                 // Motion controls section (only shown when game is started)
                 Button(action: { 
                     if sensorModel.isFetching {
@@ -213,6 +272,12 @@ struct ContentView: View {
                         .font(.footnote)
                         .foregroundColor(.green)
                 }
+                
+            default:
+                // Fallback view
+                Text("Syncing...")
+                    .font(.headline)
+                    .foregroundColor(.white)
             }
             
             Text(watchSession.status)

@@ -238,6 +238,9 @@ final class GameSceneLab: SKScene {
         setupBackground()
         createArrowButtons()
         
+        // Notify watch that we're in game
+        watchSession.sendScreenChange("game")
+        
         // Set up watch session handlers
         watchSession.onDirection = { [weak self] direction in
             guard let self = self else { return }
@@ -287,8 +290,9 @@ final class GameSceneLab: SKScene {
         restartLabel?.removeFromParent()
         restartLabel = nil
         lastUpdateTime = 0
-    
-
+        
+        // Notify watch that we're back in game
+        watchSession.sendScreenChange("game")
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -375,11 +379,12 @@ final class GameSceneLab: SKScene {
         obstacleSpawnTimer += deltaTime
         if obstacleSpawnTimer >= obstacleSpawnInterval {
             obstacleSpawnTimer = 0
-            // createObstacles()
+            createObstacles()
         }
         // If collision, stop the game and tint player red
         if didCollide {
             sendMessageToWatch("Game Over")
+            watchSession.sendScreenChange("gameOver")
             isGameOver = true
             player?.color = .red
             player?.colorBlendFactor = 0.7
