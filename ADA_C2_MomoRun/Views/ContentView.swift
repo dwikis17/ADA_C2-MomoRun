@@ -22,6 +22,8 @@ struct ContentView: View {
     // private var gameScene = GameSceneLab()
 
     var body: some View {
+        
+        
         ZStack {
             // Main content
             if !showingSplash {

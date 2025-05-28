@@ -9,6 +9,8 @@ class SetCaloriesScene: SKScene {
     private var calorieValue: Int = 0
     private var calorieLabel: SKLabelNode?
     private var doneButton: SKSpriteNode?
+    private var plusButton: SKSpriteNode?
+    private var minusButton: SKSpriteNode?
     
     // Initialize with watch session
     init(size: CGSize, watchSession: WatchSessionManager) {
@@ -120,14 +122,18 @@ class SetCaloriesScene: SKScene {
         plus.setScale(0.5)
         plus.position = CGPoint(x: size.width / 2 + 80, y: size.height / 2 - 40)
         plus.zPosition = 15
+        plus.name = "plusButton"
         addChild(plus)
+        plusButton = plus
         
         
         let minus = SKSpriteNode(imageNamed: "min")
         minus.setScale(0.5)
         minus.position = CGPoint(x: size.width / 2 - 80, y: size.height / 2 - 40)
         minus.zPosition = 15
+        minus.name = "minusButton"
         addChild(minus)
+        minusButton = minus
         
         // Add calorie value label
         calorieLabel = SKLabelNode(fontNamed: "Jersey15-Regular")
@@ -180,8 +186,12 @@ class SetCaloriesScene: SKScene {
         
         if direction == "up" {
             calorieValue = min(calorieValue + increment, 5000) // Max 5000 calories
+            // Animate plus button
+            animateButtonPress(plusButton)
         } else if direction == "down" {
             calorieValue = max(calorieValue - increment, 0) // Min 0 calories
+            // Animate minus button
+            animateButtonPress(minusButton)
         }
         
         // Update the display
@@ -191,6 +201,39 @@ class SetCaloriesScene: SKScene {
     // Update the calorie display
     private func updateCalorieDisplay() {
         calorieLabel?.text = "\(calorieValue) KCAL"
+    }
+    
+    // Animate button press effect
+    private func animateButtonPress(_ button: SKSpriteNode?) {
+        guard let button = button else { return }
+        
+        // Create press animation: darken, scale down, then restore
+        let darken = SKAction.colorize(with: .black, colorBlendFactor: 0.3, duration: 0.1)
+        let scaleDown = SKAction.scale(to: 0.45, duration: 0.1)
+        let pressGroup = SKAction.group([darken, scaleDown])
+        
+        let restore = SKAction.colorize(with: .white, colorBlendFactor: 0.0, duration: 0.1)
+        let scaleUp = SKAction.scale(to: 0.5, duration: 0.1)
+        let restoreGroup = SKAction.group([restore, scaleUp])
+        
+        let sequence = SKAction.sequence([pressGroup, restoreGroup])
+        button.run(sequence)
+    }
+    
+    // Handle plus button press
+    private func increaseCaloricValue() {
+        let increment = 50
+        calorieValue = min(calorieValue + increment, 5000)
+        updateCalorieDisplay()
+        animateButtonPress(plusButton)
+    }
+    
+    // Handle minus button press
+    private func decreaseCalorieValue() {
+        let increment = 50
+        calorieValue = max(calorieValue - increment, 0)
+        updateCalorieDisplay()
+        animateButtonPress(minusButton)
     }
     
     // Save the calorie target and transition to the game
@@ -214,6 +257,10 @@ class SetCaloriesScene: SKScene {
         for node in nodes {
             if node.name == "doneButton" {
                 saveCalorieTarget()
+            } else if node.name == "plusButton" {
+                increaseCaloricValue()
+            } else if node.name == "minusButton" {
+                decreaseCalorieValue()
             }
         }
     }
