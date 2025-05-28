@@ -67,6 +67,12 @@ struct ContentView: View {
     @State private var gameStarted = false
     @State private var calorieValue: Double = 2000
     
+    @StateObject private var healthStore = HealthStore()
+    @State private var caloriesBurned: Double = 0.0
+    @State private var heartRate: Int = 0
+    
+    private var showCalories: Bool = true
+    
     var body: some View {
         ZStack {
             Image(.momoBG)
@@ -121,6 +127,16 @@ struct ContentView: View {
                     .font(.custom("Jersey15-Regular", size:40))
                     .foregroundColor(.red)
                     .padding()
+                HStack (spacing: 30) {
+                        HStack {
+                            Image(systemName: "flame.fill")
+                            Text("\(caloriesBurned, specifier: "%.1f") kcal")
+                        }
+                        HStack {
+                            Image(systemName: "heart.fill")
+                            Text("\(heartRate)")
+                        }
+                    }
                 Button(action : {
                     watchSession.gameOver = false
                     watchSession.status = ""
@@ -162,12 +178,38 @@ struct ContentView: View {
             } 
             // Game controls view
             else {
+                VStack (spacing: 10) {
+                        HStack {
+                            Image(systemName: "flame.fill")
+                            Text("\(caloriesBurned, specifier: "%.1f") kcal")
+                        }
+                        HStack {
+                            Image(systemName: "heart.fill")
+                            Text("\(heartRate)")
+                        }
+                    }
                 // Motion controls section (only shown when game is started)
                 Button(action: { 
                     if sensorModel.isFetching {
                         sensorModel.stopFetchingSensorData()
+                        healthStore.stopWorkout()
                     } else {
                         sensorModel.startFetchingSensorData()
+                        healthStore.startWorkout()
+                        self.caloriesBurned = 0.0 // Reset calorie every start a new fetch
+                        self.heartRate = 0 // Reset heart rate every start a new fetch
+                        
+                        if Config.getHealthStoreData {
+                            Task {
+                                await healthStore.requestHealthData()
+                                healthStore.fetchActiveEnergyBurned { calories in
+                                    self.caloriesBurned = calories
+                                }
+                                healthStore.fetchHeartRateLive { rate in
+                                    self.heartRate = Int(rate)
+                                }
+                            }
+                        }
                     }
                 }) {
                     Text(sensorModel.isFetching ? "Stop Controls" : "Start Controls")

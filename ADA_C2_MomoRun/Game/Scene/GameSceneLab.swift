@@ -49,20 +49,22 @@ final class GameSceneLab: SKScene {
     }
 
     private func createPlayer() {
-        let playerNode = SKSpriteNode(imageNamed: "player_0") // Start with the first frame
+        let playerNode = SKSpriteNode(imageNamed: "run_0") // Start with the first frame
         let position = Vector(x: -3, y: playerY, z: 3)
         let screenVector = convertWorldToScreen(position)
         playerNode.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
         playerNode.zPosition = CGFloat(convertWorldToZPosition(position))
-        playerNode.setScale(0.5)
+        // Adjust anchor point to bottom center
+        playerNode.anchorPoint = CGPoint(x: 0.5, y: 0.6)
         addChild(playerNode)
         self.player = playerNode
 
-        let playerFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+        let playerFrames: [SKTexture] = (1..<6).map { SKTexture(imageNamed: "run_0\($0)") }
         let runAnimation = SKAction.animate(with: playerFrames, timePerFrame: 0.1, resize: false, restore: true)
         let repeatRun = SKAction.repeatForever(runAnimation)
         playerNode.run(repeatRun, withKey: "run")
     }
+
 
     
     private func setupBackground() {
@@ -200,17 +202,12 @@ final class GameSceneLab: SKScene {
     }
 
     private func createCamera() {
-      
-        
         let cameraNode = SKCameraNode()
-    
         let cameraScreenVector = convertWorldToScreen(Vector(x: 0, y: 2))
         cameraNode.position = CGPoint(x: CGFloat(cameraScreenVector.x), y: CGFloat(cameraScreenVector.y))
         cameraNode.setScale(0.4) // Zoom in to make tiles look bigger
         addChild(cameraNode)
         self.camera = cameraNode
-
-        
     }
 
     private func createArrowButtons() {
@@ -378,7 +375,7 @@ final class GameSceneLab: SKScene {
         obstacleSpawnTimer += deltaTime
         if obstacleSpawnTimer >= obstacleSpawnInterval {
             obstacleSpawnTimer = 0
-            createObstacles()
+            // createObstacles()
         }
         // If collision, stop the game and tint player red
         if didCollide {
@@ -409,11 +406,7 @@ final class GameSceneLab: SKScene {
         let location = touch.location(in: self)
         let nodes = self.nodes(at: location)
         for node in nodes {
-            if node.name == "arrow_left" {
-                receiveJumpSignal()
-            } else if node.name == "arrow_right" {
-                moveRight()
-            }
+           receiveJumpSignal()
         }
     } 
 
@@ -436,37 +429,37 @@ final class GameSceneLab: SKScene {
    private func receiveJumpSignal() {
     guard let playerNode = player else { return }
     playerNode.removeAction(forKey: "run")
-    let jumpFrames: [SKTexture] = (0..<10).map { SKTexture(imageNamed: "player_jump_\($0)") }
+    let jumpFrames: [SKTexture] = (1..<9).map { SKTexture(imageNamed: "jump_0\($0)") }
     let jumpAction = SKAction.animate(with: jumpFrames, timePerFrame: 0.08, resize: false, restore: true)
-    let jumpHeight: CGFloat = 30
-    let jumpDuration: TimeInterval = 0.44
+    let jumpHeight: CGFloat = 10
+    let jumpDuration: TimeInterval = 0.2
     let moveUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: jumpDuration)
     moveUp.timingMode = .easeOut
     let moveDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: jumpDuration)
     moveDown.timingMode = .easeIn
     let jumpMove = SKAction.sequence([moveUp, moveDown])
-
-    // Animate z: set to 4 during jump, then back to 3
+    // Animate z: set to 4 during jump, then back to 
     let setZUp = SKAction.run { [weak self] in self?.playerZ = 4 }
     let setZDown = SKAction.run { [weak self] in self?.playerZ = 3 }
     let zSequence = SKAction.sequence([setZUp, SKAction.wait(forDuration: jumpDuration * 2), setZDown])
 
     let group = SKAction.group([jumpAction, jumpMove, zSequence])
-    let runFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+    let runFrames: [SKTexture] = (1..<6).map { SKTexture(imageNamed: "run_0\($0)") }
     let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
     let repeatRun = SKAction.repeatForever(runAnimation)
     let sequence = SKAction.sequence([group, repeatRun])
     playerNode.run(sequence, withKey: "run")
-}
+    }
+
     private func receiveCrouchSignal() {
          guard let playerNode = player else { return }
         // Stop current animation
         playerNode.removeAction(forKey: "run")
         // Prepare jump frames
-        let crouchFrames: [SKTexture] = (0..<10).map { SKTexture(imageNamed: "player_crouch_\($0)") }
+        let crouchFrames: [SKTexture] = (1..<10).map { SKTexture(imageNamed: "roll_0\($0)") }
         let crouchAction = SKAction.animate(with: crouchFrames, timePerFrame: 0.08, resize: false, restore: true)
         // After jump, resume running
-        let runFrames: [SKTexture] = (0..<9).map { SKTexture(imageNamed: "player_\($0)") }
+        let runFrames: [SKTexture] = (1..<6).map { SKTexture(imageNamed: "run_0\($0)") }
         let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
         let repeatRun = SKAction.repeatForever(runAnimation)
         let sequence = SKAction.sequence([crouchAction, repeatRun])
