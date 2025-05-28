@@ -82,6 +82,17 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             WCSession.default.sendMessage(["calorieDirection": direction], replyHandler: nil)
         }
     }
+    
+    func sendFinalSessionCalories(_ calories: Double) {
+        if WCSession.default.isReachable {
+            let calorieData = ["sessionFinalCalories": calories]
+            WCSession.default.sendMessage(calorieData, replyHandler: { _ in
+                print("Successfully sent final session calories (\(calories)) to iPhone.")
+            }, errorHandler: { error in
+                print("Error sending final session calories to iPhone: \(error.localizedDescription)")
+            })
+        }
+    }
 }
 
 struct ContentView: View {
@@ -243,6 +254,7 @@ struct ContentView: View {
                         healthStore.stopWorkout()
                         healthStore.stopCalorieSession()
                         healthStore.stopLiveCalorieUpdates()
+                        watchSession.sendFinalSessionCalories(self.caloriesBurned)
                     } else {
                         sensorModel.startFetchingSensorData()
                         healthStore.startWorkout()

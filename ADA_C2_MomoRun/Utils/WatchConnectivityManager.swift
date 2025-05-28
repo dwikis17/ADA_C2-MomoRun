@@ -12,9 +12,12 @@ import Combine // Import Combine for @Published
 class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var receivedMessage: String = ""
     @Published var isReachable: Bool = false
+    @Published var finalSessionCaloriesFromWatch: Double?
+    
     var onDirection: ((String) -> Void)?
     var onRestart: (() -> Void)?
     var onStart: (() -> Void)?
+    var onFinalSessionCaloriesReceived: ((Double) -> Void)?
     
     // New callbacks for calorie functionality
     var onCalorieDirection: ((String) -> Void)?
@@ -86,6 +89,12 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             if let screenType = message["screenType"] as? String {
                 self.onScreenChange?(screenType)
                 print("Received screen change: \(screenType)")
+            }
+            
+            if let finalCalories = message["sessionFinalCalories"] as? Double {
+                print("Received final session calories from Watch: \(finalCalories)")
+                self.finalSessionCaloriesFromWatch = finalCalories
+                self.onFinalSessionCaloriesReceived?(finalCalories)
             }
         }
     }
