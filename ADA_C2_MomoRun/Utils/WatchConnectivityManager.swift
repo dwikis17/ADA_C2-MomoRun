@@ -23,6 +23,9 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     // New callbacks for screen synchronization
     var onScreenChange: ((String) -> Void)?
 
+    // New callback for go to calorie setup
+    var onGoToCalorieSetup: (() -> Void)?
+
     override init() {
         super.init()
         if WCSession.isSupported() {
@@ -80,6 +83,12 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             if let calorieDone = message["calorieDone"] as? Bool, calorieDone {
                 self.onCalorieDone?()
                 print("Received calorie done command")
+            }
+            
+            // Handle go to calorie setup message from watch
+            if let goToCalorieSetup = message["goToCalorieSetup"] as? Bool, goToCalorieSetup {
+                self.onGoToCalorieSetup?()
+                print("Received go to calorie setup command")
             }
             
             // Handle screen synchronization messages

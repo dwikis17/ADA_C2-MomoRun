@@ -157,6 +157,11 @@ final class MainMenuScene: SKScene {
             self.watchSession.onStart = { [weak self] in
                 self?.startGame()
             }
+            
+            // Set up watch session go to calorie setup handler
+            self.watchSession.onGoToCalorieSetup = { [weak self] in
+                self?.goToCalorieSetup()
+            }
         }
         
         let finalSequence = SKAction.sequence([waitForLogo, addElements])
