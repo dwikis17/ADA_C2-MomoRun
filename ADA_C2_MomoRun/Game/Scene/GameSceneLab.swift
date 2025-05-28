@@ -145,7 +145,7 @@ final class GameSceneLab: SKScene {
         updatePlayerPosition()
     }
 
-    private func createObstacles() {
+    private func createRockObstacles() {
         let y = [0, 1, 2].randomElement() ?? 0
         let z = Int(3)
         let obstacle = SKSpriteNode(imageNamed: "rock")
@@ -159,8 +159,19 @@ final class GameSceneLab: SKScene {
         obstacles.append(obstacle)
     }
 
-    private func createLogsObstacles() {
-        let y 
+    private func createCuttedTreeObstacles() {
+        let z = 3
+        for y in 0..<floorWidth {
+            let obstacle = SKSpriteNode(imageNamed: "cutted_tree")
+            let position = Vector(x: obstacleStartX, y: y, z: z)
+            let screenVector = convertWorldToScreen(position)
+            obstacle.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(Double(screenVector.y)))
+            obstacle.zPosition = CGFloat(convertWorldToZPosition(position))
+            obstacle.anchorPoint = CGPoint(x: 0.5, y: y == 0 ? 0.5 : (y == 2 ? 0.0 : 0.3))
+            obstacle.userData = ["worldX": Double(obstacleStartX), "y": y, "z": z]
+            addChild(obstacle)
+            obstacles.append(obstacle)
+        }
     }
 
     private func moveRight() {
@@ -378,8 +389,12 @@ final class GameSceneLab: SKScene {
         // Spawn new obstacles at random intervals
         obstacleSpawnTimer += deltaTime
         if obstacleSpawnTimer >= obstacleSpawnInterval {
-            obstacleSpawnTimer = 0
-            // createObstacles()
+            obstacleSpawnTimer = 0  
+            if Bool.random() {
+                createRockObstacles()
+            } else {
+                createCuttedTreeObstacles()
+            }
         }
         // If collision, stop the game and tint player red
         if didCollide {
@@ -436,7 +451,7 @@ final class GameSceneLab: SKScene {
     let jumpFrames: [SKTexture] = (1..<9).map { SKTexture(imageNamed: "jump_0\($0)") }
     let jumpAction = SKAction.animate(with: jumpFrames, timePerFrame: 0.08, resize: false, restore: true)
     let jumpHeight: CGFloat = 10
-    let jumpDuration: TimeInterval = 0.2
+    let jumpDuration: TimeInterval = 0.3
     let moveUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: jumpDuration)
     moveUp.timingMode = .easeOut
     let moveDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: jumpDuration)
