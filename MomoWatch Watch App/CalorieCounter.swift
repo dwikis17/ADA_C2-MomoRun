@@ -11,6 +11,9 @@ class HealthStore: ObservableObject {
     
     private var workoutSession: HKWorkoutSession?
     private var workoutBuilder: HKLiveWorkoutBuilder?
+    private var sessionStartDate: Date?
+    
+    private var activeEnergyQuery: HKObserverQuery?
 
     let healthStore = HKHealthStore()
 
@@ -18,6 +21,8 @@ class HealthStore: ObservableObject {
         HKQuantityType(.activeEnergyBurned),
         HKQuantityType(.heartRate)
     ]
+    
+    // MARK: WORKOUT SESSION ============================================================
     
     func startWorkout() {
         guard workoutSession == nil else { return }
@@ -44,6 +49,8 @@ class HealthStore: ObservableObject {
         workoutBuilder = nil        
     }
     
+    // MARK: AUTHORIZATION ============================================================
+    
     func requestHealthData() async {
         do {
             if HKHealthStore.isHealthDataAvailable() {
@@ -54,11 +61,23 @@ class HealthStore: ObservableObject {
             print("*** An unexpected error occurred while requesting authorization: \(error.localizedDescription) ***")
         }
     }
+    
+    // MARK: CALORIE COUNTER ============================================================
+    
+    func startCalorieSession() {
+        sessionStartDate = Date()
+    }
 
+    func stopCalorieSession() {
+        sessionStartDate = nil
+    }
+    
+    // Fetch one at a time
     func fetchActiveEnergyBurned(completion: @escaping (Double) -> Void) {
         let calories = HKQuantityType(.activeEnergyBurned)
-        let startOfDay = Calendar.current.startOfDay(for: Date())
-        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: Date(), options: .strictStartDate)
+        // let startOfDay = Calendar.current.startOfDay(for: Date())
+        let start = sessionStartDate ?? Calendar.current.startOfDay(for: Date())
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
         let query = HKStatisticsQuery(quantityType: calories, quantitySamplePredicate: predicate) {
             _, result, error in
             guard let quantity = result?.sumQuantity(), error == nil else {
@@ -73,6 +92,48 @@ class HealthStore: ObservableObject {
         }
         healthStore.execute(query)
     }
+    
+    // Read calorie live
+    func startLiveCalorieUpdates(completion: @escaping(Double) -> Void) {
+        guard let activeEnergyType = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else {
+            print("Failed to create active energy type")
+                return
+        }
+
+        activeEnergyQuery = HKObserverQuery(sampleType: activeEnergyType, predicate: nil) { [weak self] (query, completionHandler, error) in
+            guard let self = self else { return }
+            if let error = error {
+                print("Observer active energy query failed: \(error.localizedDescription)")
+                completionHandler()
+                return
+            }
+            
+            self.fetchActiveEnergyBurned { calories in
+                DispatchQueue.main.async {
+                    completion(calories)
+                }
+                completionHandler()
+            }
+        }
+        
+        if let query = activeEnergyQuery {
+            healthStore.execute(query)
+            fetchActiveEnergyBurned { calories in
+                DispatchQueue.main.async {
+                    completion(calories)
+                }
+            }
+        }
+    }
+    
+    func stopLiveCalorieUpdates() {
+        if let query = activeEnergyQuery {
+            healthStore.stop(query)
+            activeEnergyQuery = nil
+        }
+    }
+    
+    // MARK: HEART RATE TRACKER ============================================================
     
     func fetchMostRecentHeartRate(completion: @escaping (HKQuantitySample?) -> Void) {
         guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
