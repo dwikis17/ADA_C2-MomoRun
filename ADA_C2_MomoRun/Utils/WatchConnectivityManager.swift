@@ -19,6 +19,9 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     // New callbacks for calorie functionality
     var onCalorieDirection: ((String) -> Void)?
     var onCalorieDone: (() -> Void)?
+    
+    // New callbacks for screen synchronization
+    var onScreenChange: ((String) -> Void)?
 
     override init() {
         super.init()
@@ -78,6 +81,12 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
                 self.onCalorieDone?()
                 print("Received calorie done command")
             }
+            
+            // Handle screen synchronization messages
+            if let screenType = message["screenType"] as? String {
+                self.onScreenChange?(screenType)
+                print("Received screen change: \(screenType)")
+            }
         }
     }
     
@@ -104,6 +113,20 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         WCSession.default.sendMessage(["showCalorieSetup": true], replyHandler: nil) { error in
             if error != nil {
                 print("Error sending showCalorieSetup: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // Function to notify watch of current screen
+    func sendScreenChange(_ screenType: String) {
+        guard WCSession.default.isReachable else {
+            print("Watch is not reachable.")
+            return
+        }
+        
+        WCSession.default.sendMessage(["screenType": screenType], replyHandler: nil) { error in
+            if error != nil {
+                print("Error sending screen change: \(error.localizedDescription)")
             }
         }
     }

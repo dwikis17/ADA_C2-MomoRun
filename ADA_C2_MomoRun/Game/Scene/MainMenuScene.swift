@@ -40,6 +40,9 @@ final class MainMenuScene: SKScene {
         
         // Create the intro animation sequence
         createIntroSequence()
+        
+        // Notify watch that we're on main menu
+        watchSession.sendScreenChange("mainMenu")
     }
     
     private func createGradientBackground() {
@@ -169,6 +172,16 @@ final class MainMenuScene: SKScene {
         settingsButton.setScale(0.9)
         settingsButton.zPosition = 10
         addChild(settingsButton)
+        
+        // Add breathing animation effect
+        let breatheUp = SKAction.scale(to: 0.95, duration: 1.5)
+        breatheUp.timingMode = .easeInEaseOut
+        let breatheDown = SKAction.scale(to: 0.85, duration: 1.5)
+        breatheDown.timingMode = .easeInEaseOut
+        let breatheSequence = SKAction.sequence([breatheUp, breatheDown])
+        let breatheForever = SKAction.repeatForever(breatheSequence)
+        
+        settingsButton.run(breatheForever)
     }
 
     private func createPlayButton() {
@@ -207,15 +220,33 @@ final class MainMenuScene: SKScene {
             
             // Tell the watch to show calorie setup UI
             watchSession.sendShowCalorieSetup()
+            watchSession.sendScreenChange("calorieSetup")
             
             view?.presentScene(calorieSetupScene, transition: transition)
         } else {
-            // Transition directly to the Game Scene if calorie target is already set
-            let gameScene = GameSceneLab(size: size, watchSession: watchSession)
-            gameScene.scaleMode = scaleMode
+            // Transition to loading scene if calorie target is already set
+            let loadingScene = LoadingScene(size: size, watchSession: watchSession)
+            loadingScene.scaleMode = scaleMode
             let transition = SKTransition.fade(withDuration: 0.5)
-            view?.presentScene(gameScene, transition: transition)
+            
+            // Notify watch about loading screen
+            watchSession.sendScreenChange("loading")
+            
+            view?.presentScene(loadingScene, transition: transition)
         }
+    }
+
+    private func goToCalorieSetup() {
+        // Navigate to calorie setup scene
+        let calorieSetupScene = SetCaloriesScene(size: size, watchSession: watchSession)
+        calorieSetupScene.scaleMode = scaleMode
+        let transition = SKTransition.fade(withDuration: 0.5)
+        
+        // Tell the watch to show calorie setup UI
+        watchSession.sendShowCalorieSetup()
+        watchSession.sendScreenChange("calorieSetup")
+        
+        view?.presentScene(calorieSetupScene, transition: transition)
     }
 
     // Update touch handling for the new play button
@@ -226,8 +257,14 @@ final class MainMenuScene: SKScene {
 
         for node in nodesAtLocation {
             if node.name == "settingsButton" {
-                // Handle settings button tap
-                print("Settings button tapped!") // Placeholder action
+                // Handle settings button tap with animation
+                let scaleUp = SKAction.scale(to: 1.1, duration: 0.1)
+                let scaleDown = SKAction.scale(to: 0.9, duration: 0.1)
+                let clickSequence = SKAction.sequence([scaleUp, scaleDown])
+                
+                node.run(clickSequence) { [weak self] in
+                    self?.goToCalorieSetup()
+                }
                 break
             } else if node.name == "resetButton" || node.parent?.name == "resetButton" {
                 // Directly reset data without confirmation

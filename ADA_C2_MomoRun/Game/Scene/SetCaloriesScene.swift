@@ -49,6 +49,9 @@ class SetCaloriesScene: SKScene {
         watchSession.onCalorieDone = { [weak self] in
             self?.saveCalorieTarget()
         }
+        
+        // Notify watch that we're on calorie setup screen
+        watchSession.sendScreenChange("calorieSetup")
     }
     
     private func setupUI() {
@@ -120,7 +123,7 @@ class SetCaloriesScene: SKScene {
         
         let plus = SKSpriteNode(imageNamed: "plus")
         plus.setScale(0.5)
-        plus.position = CGPoint(x: size.width / 2 + 80, y: size.height / 2 - 40)
+        plus.position = CGPoint(x: size.width / 2 + 100, y: size.height / 2 - 40)
         plus.zPosition = 15
         plus.name = "plusButton"
         addChild(plus)
@@ -129,7 +132,7 @@ class SetCaloriesScene: SKScene {
         
         let minus = SKSpriteNode(imageNamed: "min")
         minus.setScale(0.5)
-        minus.position = CGPoint(x: size.width / 2 - 80, y: size.height / 2 - 40)
+        minus.position = CGPoint(x: size.width / 2 - 100, y: size.height / 2 - 40)
         minus.zPosition = 15
         minus.name = "minusButton"
         addChild(minus)
@@ -240,6 +243,9 @@ class SetCaloriesScene: SKScene {
     func saveCalorieTarget() {
         // Save the calorie target to the shared model
         CalorieData.shared.setTarget(calorieValue)
+        
+        // Notify watch about loading screen
+        watchSession.sendScreenChange("loading")
         
         // Transition to loading scene first
         let loadingScene = LoadingScene(size: size, watchSession: watchSession)

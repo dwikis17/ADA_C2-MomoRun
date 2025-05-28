@@ -28,7 +28,7 @@ struct ContentView: View {
             // Main content
             if !showingSplash {
                GeometryReader { geometry in
-                   SpriteView(scene: MainMenuScene(size: geometry.size, watchSession: watchSession))
+                   SpriteView(scene: SetCaloriesScene(size: geometry.size, watchSession: watchSession))
                        .ignoresSafeArea()
                }
                 // Watch Connection Status Indicator (SwiftUI)

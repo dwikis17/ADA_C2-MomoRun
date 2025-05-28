@@ -29,6 +29,8 @@ class LoadingScene: SKScene {
         setupUI()
         startAnimations()
         
+        // Notify watch that we're on loading screen
+        watchSession.sendScreenChange("loading")
     
         // Transition to game after 3 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
@@ -117,6 +119,9 @@ class LoadingScene: SKScene {
     }
     
     private func transitionToGame() {
+        // Notify watch that we're starting the game
+        watchSession.sendScreenChange("game")
+        
         // Transition to game scene
         let gameScene = GameSceneLab(size: size, watchSession: watchSession)
         gameScene.scaleMode = scaleMode
