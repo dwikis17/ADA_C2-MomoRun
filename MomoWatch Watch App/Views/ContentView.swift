@@ -182,16 +182,19 @@ struct ContentView: View {
                     if sensorModel.isFetching {
                         sensorModel.stopFetchingSensorData()
                         healthStore.stopWorkout()
+                        healthStore.stopCalorieSession()
+                        healthStore.stopLiveCalorieUpdates()
                     } else {
                         sensorModel.startFetchingSensorData()
                         healthStore.startWorkout()
+                        healthStore.startCalorieSession()
                         self.caloriesBurned = 0.0 // Reset calorie every start a new fetch
                         self.heartRate = 0 // Reset heart rate every start a new fetch
                         
                         if Config.getHealthStoreData {
                             Task {
                                 await healthStore.requestHealthData()
-                                healthStore.fetchActiveEnergyBurned { calories in
+                                healthStore.startLiveCalorieUpdates { calories in
                                     self.caloriesBurned = calories
                                 }
                                 healthStore.fetchHeartRateLive { rate in
@@ -217,7 +220,6 @@ struct ContentView: View {
                 .foregroundColor(.gray)
                 .padding(.top, 8)
         }
-        .padding()
         .onChange(of: sensorModel.directionX) { _ in
             if !sensorModel.directionX.isEmpty {
                 sendDirection(sensorModel.directionX)
