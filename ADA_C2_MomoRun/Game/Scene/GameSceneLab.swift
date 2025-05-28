@@ -159,6 +159,10 @@ final class GameSceneLab: SKScene {
         obstacles.append(obstacle)
     }
 
+    private func createLogsObstacles() {
+        let y 
+    }
+
     private func moveRight() {
         guard playerY > 0 else { return }
         playerY -= 1

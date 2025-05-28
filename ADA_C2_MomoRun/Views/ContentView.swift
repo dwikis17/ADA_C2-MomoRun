@@ -25,9 +25,11 @@ struct ContentView: View {
             // Main content
             if !showingSplash {
                GeometryReader { geometry in
-                   SpriteView(scene: MainMenuScene(size: geometry.size, watchSession: watchSession))
+                   SpriteView(scene: GameSceneLab(size: geometry.size, watchSession: watchSession))
                        .ignoresSafeArea()
                }
+          
+                .ignoresSafeArea()
                 // Watch Connection Status Indicator (SwiftUI)
                 Circle()
                     .fill(watchSession.isReachable ? Color.green : Color.red)
