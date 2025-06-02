@@ -8,6 +8,7 @@
 import Foundation
 import SpriteKit
 import WatchConnectivity
+import AVFoundation
 
 enum ObstacleType: String {
     case jump
@@ -38,6 +39,10 @@ final class GameSceneLab: SKScene {
     private var restartLabel: SKLabelNode?
     private var boar: SKSpriteNode?
     private var playerZ: Int = 3 // Default ground level
+    private var crashAudioPlayer: AVAudioPlayer?
+    private var runAudioPlayer: AVAudioPlayer?
+    private var bgmAudioNode: SKAudioNode!
+
     
     // Add a property to hold the WatchSessionManager instance
     private var watchSession: WatchSessionManager
@@ -53,9 +58,35 @@ final class GameSceneLab: SKScene {
         fatalError("init(coder:) has not been implemented")
     }
 
+    private func playRunSound() {
+        guard let url = Bundle.main.url(forResource: "run", withExtension: "MP3") else { return }
+        do {
+            runAudioPlayer = try AVAudioPlayer(contentsOf: url)
+            runAudioPlayer?.numberOfLoops = -1 // loop forever
+            runAudioPlayer?.volume = 0.7
+            runAudioPlayer?.play()
+        } catch {
+            print("Failed to play run.mp3: \(error)")
+        }
+    }
 
+    private func playCrashSound() {
+        guard let url = Bundle.main.url(forResource: "crash", withExtension: "mp3") else { return }
+        do {
+            crashAudioPlayer = try AVAudioPlayer(contentsOf: url)
+             crashAudioPlayer?.volume = 1.0
+            crashAudioPlayer?.play()
+           
+            print("CRASH")
+        } catch {
+            print("Failed to play crash.mp3: \(error)")
+        }
+    }
 
-
+    private func stopRunSound() {
+        runAudioPlayer?.stop()
+        runAudioPlayer = nil
+    }
     
     private func setupBackground() {
         let backgroundNode = SKSpriteNode(imageNamed: "background")
@@ -145,12 +176,16 @@ final class GameSceneLab: SKScene {
         let runAnimation = SKAction.animate(with: playerFrames, timePerFrame: 0.1, resize: false, restore: true)
         let repeatRun = SKAction.repeatForever(runAnimation)
         playerNode.run(repeatRun, withKey: "run")
+        playRunSound()
     }
 
     private func moveLeft() {
         guard playerY < floorWidth - 1 else { return }
         playerY += 1
-        updatePlayerPosition()
+        updatePlayerPosition()   
+         run(SKAction.playSoundFileNamed("jump-crouch.mp3", waitForCompletion: false))
+
+
     }
 
     private func createRockObstacles() {
@@ -262,6 +297,8 @@ final class GameSceneLab: SKScene {
         guard playerY > 0 else { return }
         playerY -= 1
         updatePlayerPosition()
+        run(SKAction.playSoundFileNamed("jump-crouch.mp3", waitForCompletion: false))
+
     }
 
     private func updatePlayerPosition() {
@@ -359,6 +396,13 @@ final class GameSceneLab: SKScene {
         }
         UIApplication.shared.isIdleTimerDisabled = true
 
+        if let bgmURL = Bundle.main.url(forResource: "bgm", withExtension: "mp3") {
+            bgmAudioNode = SKAudioNode(url: bgmURL)
+            bgmAudioNode.autoplayLooped = true
+            bgmAudioNode.run(SKAction.changeVolume(to: 0.3, duration: 0)) // Set volume to 30%
+            addChild(bgmAudioNode)
+        }
+
     }
     
     // Helper for smooth isometric rendering (uses Double for x)
@@ -391,6 +435,7 @@ final class GameSceneLab: SKScene {
         restartLabel?.removeFromParent()
         restartLabel = nil
         lastUpdateTime = 0
+        playRunSound()
         
         // Notify watch that we're back in game
         watchSession.sendScreenChange("game")
@@ -467,6 +512,8 @@ final class GameSceneLab: SKScene {
             // Collision check: player is always at (-3, playerY, 3)
             if Int(round(newWorldX)) == -3 && y == playerY && z == 3 && playerZ == 3 {
                 didCollide = true
+                playCrashSound()
+                stopRunSound()
             }
         }
         // Remove obstacles that are off screen
@@ -535,13 +582,14 @@ final class GameSceneLab: SKScene {
         let location = touch.location(in: self)
         let nodes = self.nodes(at: location)
         for node in nodes {
-           receiveCrouchSignal()
+           receiveJumpSignal()
         }
     } 
 
 
    private func receiveJumpSignal() {
     guard let playerNode = player else { return }
+    stopRunSound()
     playerNode.removeAction(forKey: "run")
     let jumpFrames: [SKTexture] = (1..<9).map { SKTexture(imageNamed: "jump_0\($0)") }
     let jumpAction = SKAction.animate(with: jumpFrames, timePerFrame: 0.08, resize: false, restore: true)
@@ -561,12 +609,16 @@ final class GameSceneLab: SKScene {
     let runFrames: [SKTexture] = (1..<6).map { SKTexture(imageNamed: "run_0\($0)") }
     let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
     let repeatRun = SKAction.repeatForever(runAnimation)
-    let sequence = SKAction.sequence([group, repeatRun])
+    let playRunSoundAction = SKAction.run { [weak self] in self?.playRunSound() }
+    let sequence = SKAction.sequence([group, playRunSoundAction, repeatRun])
     playerNode.run(sequence, withKey: "run")
+    // Play sound when jumping
+    run(SKAction.playSoundFileNamed("jump-crouch.mp3", waitForCompletion: false))
     }
 
     private func receiveCrouchSignal() {
          guard let playerNode = player else { return }
+        stopRunSound()
         // Stop current animation
         playerNode.removeAction(forKey: "run")
         // Prepare crouch frames
@@ -581,7 +633,10 @@ final class GameSceneLab: SKScene {
         let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
         let repeatRun = SKAction.repeatForever(runAnimation)
         let group = SKAction.group([crouchAction, zSequence])
-        let sequence = SKAction.sequence([group, repeatRun])
+        let playRunSoundAction = SKAction.run { [weak self] in self?.playRunSound() }
+        let sequence = SKAction.sequence([group, playRunSoundAction, repeatRun])
         playerNode.run(sequence, withKey: "run")
+        // Play sound when crouching
+        run(SKAction.playSoundFileNamed("jump-crouch.mp3", waitForCompletion: false))
     }
 }
