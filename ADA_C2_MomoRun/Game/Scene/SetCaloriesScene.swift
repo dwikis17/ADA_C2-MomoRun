@@ -6,7 +6,7 @@ class SetCaloriesScene: SKScene {
     private var watchSession: WatchSessionManager
     
     // Properties for UI elements
-    private var calorieValue: Int = 0
+    private var calorieValue: Double = 0.0
     private var calorieLabel: SKLabelNode?
     private var doneButton: SKSpriteNode?
     private var plusButton: SKSpriteNode?
@@ -185,7 +185,7 @@ class SetCaloriesScene: SKScene {
     
     // Handle calorie direction changes from watch
     private func handleCalorieDirection(_ direction: String) {
-        let increment = 50 // Calorie increment/decrement amount
+        let increment = 50.0 // Calorie increment/decrement amount
         
         if direction == "up" {
             calorieValue = min(calorieValue + increment, 5000) // Max 5000 calories
@@ -225,7 +225,7 @@ class SetCaloriesScene: SKScene {
     
     // Handle plus button press
     private func increaseCaloricValue() {
-        let increment = 50
+        let increment = 50.0
         calorieValue = min(calorieValue + increment, 5000)
         updateCalorieDisplay()
         animateButtonPress(plusButton)
@@ -233,7 +233,7 @@ class SetCaloriesScene: SKScene {
     
     // Handle minus button press
     private func decreaseCalorieValue() {
-        let increment = 50
+        let increment = 50.0
         calorieValue = max(calorieValue - increment, 0)
         updateCalorieDisplay()
         animateButtonPress(minusButton)
