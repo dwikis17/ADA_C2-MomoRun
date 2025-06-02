@@ -61,6 +61,8 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
         DispatchQueue.main.async {
+            print("HERE")
+            print("received user info | \(userInfo)")
             if let finalCalories = userInfo["sessionFinalCalories"] as? Double {
                 print("Received final session calories from Watch: \(finalCalories)")
                 CalorieData.shared.addCalories(finalCalories)

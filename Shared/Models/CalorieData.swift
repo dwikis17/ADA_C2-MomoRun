@@ -3,7 +3,7 @@ import Foundation
 class CalorieData: ObservableObject {
     // Singleton instance for easy access
     static let shared = CalorieData()
-    
+
     // Keys for UserDefaults
     private let targetKey = "dailyCaloriesTarget"
     private let todayKey = "todayCalories"
@@ -34,6 +34,7 @@ class CalorieData: ObservableObject {
     // Save data to UserDefaults
     func save() {
         let defaults = UserDefaults.standard
+        print("saved")
         defaults.set(dailyTarget, forKey: targetKey)
         defaults.set(todayCalories, forKey: todayKey)
         defaults.set(lastUpdated, forKey: dateKey)
@@ -50,12 +51,16 @@ class CalorieData: ObservableObject {
     
     // Add calories (e.g., after completing a game)
     func addCalories(_ amount: Double) {
+        let addedCalories = todayCalories + amount
         checkDateReset()
-        todayCalories += amount
+        todayCalories  = addedCalories
+        print(addedCalories)
+    
     }
     
     // Return todays' target
     func getTodayCalories() -> Double {
+        print("Todays calorie data: \(todayCalories)")
         return todayCalories
     }
     
