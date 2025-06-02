@@ -37,8 +37,11 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
 
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         // Handle activation completion if needed
+        DispatchQueue.main.async {
+            self.isReachable = (activationState == .activated && session.isReachable)
+        }
         print("WCSession activation did complete with state: \(activationState.rawValue)")
-        self.isReachable = session.isReachable
+//        self.isReachable = session.isReachable
         if let error = error {
             print("WCSession activation error: \(error.localizedDescription)")
         }
@@ -54,6 +57,16 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         print("WCSession did deactivate, reactivating...")
         self.isReachable = false
         WCSession.default.activate()
+    }
+    
+    func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
+        DispatchQueue.main.async {
+            if let finalCalories = userInfo["sessionFinalCalories"] as? Double {
+                print("Received final session calories from Watch: \(finalCalories)")
+                CalorieData.shared.addCalories(finalCalories)
+                self.onFinalSessionCaloriesReceived?(finalCalories)
+            }
+        }
     }
 
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
@@ -91,11 +104,11 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
                 print("Received screen change: \(screenType)")
             }
             
-            if let finalCalories = message["sessionFinalCalories"] as? Double {
-                print("Received final session calories from Watch: \(finalCalories)")
-                self.finalSessionCaloriesFromWatch = finalCalories
-                self.onFinalSessionCaloriesReceived?(finalCalories)
-            }
+//            if let finalCalories = message["sessionFinalCalories"] as? Double {
+//                print("Received final session calories from Watch: \(finalCalories)")
+//                CalorieData.shared.addCalories(finalCalories)
+//                self.onFinalSessionCaloriesReceived?(finalCalories)
+//            }
         }
     }
     
@@ -139,4 +152,4 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             }
         }
     }
-} 
+}
