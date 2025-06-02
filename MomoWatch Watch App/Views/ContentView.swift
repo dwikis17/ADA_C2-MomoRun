@@ -139,7 +139,8 @@ struct ContentView: View {
                         if WCSession.default.isReachable {
                             WCSession.default.sendMessage(["start": true], replyHandler: nil)
                             gameStarted = true
-                            sensorModel.startFetchingSensorData()
+//                            sensorModel.startFetchingSensorData()
+                            startSensor(true)
                         }
                     }
                     .font(.headline)
@@ -222,10 +223,11 @@ struct ContentView: View {
                     }
                     
                     Button(action : {
+                        startSensor(true)
                         watchSession.gameOver = false
                         watchSession.status = ""
                         didPlayHaptic = false
-                        sensorModel.startFetchingSensorData()
+//                        sensorModel.startFetchingSensorData()
                         if WCSession.default.isReachable {
                             WCSession.default.sendMessage(["restart": true], replyHandler: nil)
                             // Immediately start the game after retry
@@ -239,6 +241,9 @@ struct ContentView: View {
                     }
                     .buttonStyle(.plain)
                     .frame(width: 150)
+                }
+                .onAppear() {
+                    startSensor(false)
                 }
                 
             case "game":
@@ -255,34 +260,35 @@ struct ContentView: View {
                 }
                 
                 // Motion controls section (only shown when game is started)
-                Button(action: { 
-                    if sensorModel.isFetching {
-                        sensorModel.stopFetchingSensorData()
-                        healthStore.stopWorkout()
-                        healthStore.stopCalorieSession()
-                        healthStore.stopLiveCalorieUpdates()
-                        watchSession.sendFinalSessionCalories(self.caloriesBurned)
-                    } else {
-                        sensorModel.startFetchingSensorData()
-                        healthStore.startWorkout()
-                        healthStore.startCalorieSession()
-                        self.caloriesBurned = CalorieData.shared.getTodayCalories()
-                        print("Starting fetch...")
-                        print("Today calories: \(CalorieData.shared.getTodayCalories())")
-                        self.heartRate = 0 // Reset heart rate every start a new fetch
-                        
-                        if Config.getHealthStoreData {
-                            Task {
-                                await healthStore.requestHealthData()
-                                healthStore.startLiveCalorieUpdates { calories in
-                                    self.caloriesBurned = calories
-                                }
-                                healthStore.fetchHeartRateLive { rate in
-                                    self.heartRate = Int(rate)
-                                }
-                            }
-                        }
-                    }
+                Button(action: {
+                    startSensor(!sensorModel.isFetching)
+//                    if sensorModel.isFetching {
+//                        sensorModel.stopFetchingSensorData()
+//                        healthStore.stopWorkout()
+//                        healthStore.stopCalorieSession()
+//                        healthStore.stopLiveCalorieUpdates()
+//                        watchSession.sendFinalSessionCalories(self.caloriesBurned)
+//                    } else {
+//                        sensorModel.startFetchingSensorData()
+//                        healthStore.startWorkout()
+//                        healthStore.startCalorieSession()
+//                        self.caloriesBurned = CalorieData.shared.getTodayCalories()
+//                        print("Starting fetch...")
+//                        print("Today calories: \(CalorieData.shared.getTodayCalories())")
+//                        self.heartRate = 0 // Reset heart rate every start a new fetch
+//                        
+//                        if Config.getHealthStoreData {
+//                            Task {
+//                                await healthStore.requestHealthData()
+//                                healthStore.startLiveCalorieUpdates { calories in
+//                                    self.caloriesBurned = calories
+//                                }
+//                                healthStore.fetchHeartRateLive { rate in
+//                                    self.heartRate = Int(rate)
+//                                }
+//                            }
+//                        }
+//                    }
                 }) {
                     Text(sensorModel.isFetching ? "Stop Controls" : "Start Controls")
                 }
@@ -325,6 +331,36 @@ struct ContentView: View {
                 sensorModel.stopFetchingSensorData()
                 gameStarted = false
             }
+        }
+    }
+    
+    private func startSensor(_ start: Bool) {
+        if start {
+            sensorModel.startFetchingSensorData()
+            healthStore.startWorkout()
+            healthStore.startCalorieSession()
+            self.caloriesBurned = CalorieData.shared.getTodayCalories()
+            print("Starting fetch...")
+            print("Today calories: \(CalorieData.shared.getTodayCalories())")
+            self.heartRate = 0 // Reset heart rate every start a new fetch
+            
+            if Config.getHealthStoreData {
+                Task {
+                    await healthStore.requestHealthData()
+                    healthStore.startLiveCalorieUpdates { calories in
+                        self.caloriesBurned = calories
+                    }
+                    healthStore.fetchHeartRateLive { rate in
+                        self.heartRate = Int(rate)
+                    }
+                }
+            }
+        } else {
+            sensorModel.stopFetchingSensorData()
+            healthStore.stopWorkout()
+            healthStore.stopCalorieSession()
+            healthStore.stopLiveCalorieUpdates()
+            watchSession.sendFinalSessionCalories(self.caloriesBurned)
         }
     }
     
