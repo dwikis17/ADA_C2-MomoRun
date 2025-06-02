@@ -474,11 +474,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-<<<<<<< HEAD
 				PRODUCT_BUNDLE_IDENTIFIER = "com.dwiki.ADA-C2-MomoRun.watchkitapp";
-=======
-				PRODUCT_BUNDLE_IDENTIFIER = "com.wikan.ADA-C2-MomoRun.watchkitapp";
->>>>>>> main
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
