@@ -71,10 +71,13 @@ final class GameSceneLab: SKScene {
     }
 
     private func playCrashSound() {
-        guard let url = Bundle.main.url(forResource: "crash", withExtension: "MP3") else { return }
+        guard let url = Bundle.main.url(forResource: "crash", withExtension: "mp3") else { return }
         do {
             crashAudioPlayer = try AVAudioPlayer(contentsOf: url)
+             crashAudioPlayer?.volume = 1.0
             crashAudioPlayer?.play()
+           
+            print("CRASH")
         } catch {
             print("Failed to play crash.mp3: \(error)")
         }
