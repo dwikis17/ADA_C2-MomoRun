@@ -21,6 +21,13 @@ class HealthStore: ObservableObject {
         HKQuantityType(.activeEnergyBurned),
         HKQuantityType(.heartRate)
     ]
+    public func resumeSession() {
+        guard let workoutSession = workoutSession else {
+            fatalError("CANNOT RESUME")
+        
+        }
+        self.healthStore.resumeWorkoutSession(workoutSession)
+    }
     
     // MARK: WORKOUT SESSION ============================================================
     
@@ -37,11 +44,13 @@ class HealthStore: ObservableObject {
             workoutBuilder?.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: configuration)
             workoutSession?.startActivity(with: Date())
             workoutBuilder?.beginCollection(withStart: Date(), completion: {_,_ in })
+            print("Workout session started")
         } catch {
+            
             print("Failed to start workout session: \(error.localizedDescription)")
         }
     }
-    
+     
     func stopWorkout() {
         workoutSession?.end()
         workoutBuilder?.endCollection(withEnd: Date(), completion: {_,_ in })
