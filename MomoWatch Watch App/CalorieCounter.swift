@@ -81,7 +81,7 @@ class HealthStore: ObservableObject {
         let query = HKStatisticsQuery(quantityType: calories, quantitySamplePredicate: predicate) {
             _, result, error in
             guard let quantity = result?.sumQuantity(), error == nil else {
-                print("Error when trying to fetch calorie data")
+                print("Error when trying to fetch calorie data: \(error?.localizedDescription)")
                 return
             }
             
