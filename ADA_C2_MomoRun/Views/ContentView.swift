@@ -49,6 +49,8 @@ struct ContentView: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                 startFadeToBlackTransition()
             }
+            
+            UIApplication.shared.isIdleTimerDisabled = true
         }
     }
     
