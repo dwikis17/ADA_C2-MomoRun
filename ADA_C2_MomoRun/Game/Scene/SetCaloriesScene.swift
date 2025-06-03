@@ -51,7 +51,7 @@ class SetCaloriesScene: SKScene {
         }
         
         // Send current calorie value to watch for synchronization
-        watchSession.sendCurrentCalorieValue(calorieValue)
+        watchSession.sendCurrentCalorieValue(Int(calorieValue))
         
         // Notify watch that we're on calorie setup screen
         watchSession.sendScreenChange("calorieSetup")
@@ -204,7 +204,7 @@ class SetCaloriesScene: SKScene {
         updateCalorieDisplay()
         
         // Send updated value to watch for synchronization
-        watchSession.sendCurrentCalorieValue(calorieValue)
+        watchSession.sendCurrentCalorieValue(Int(calorieValue))
     }
     
     // Update the calorie display
@@ -236,7 +236,7 @@ class SetCaloriesScene: SKScene {
         updateCalorieDisplay()
         animateButtonPress(plusButton)
         // Send updated value to watch for synchronization
-        watchSession.sendCurrentCalorieValue(calorieValue)
+        watchSession.sendCurrentCalorieValue(Int(calorieValue))
     }
     
     // Handle minus button press
@@ -246,7 +246,7 @@ class SetCaloriesScene: SKScene {
         updateCalorieDisplay()
         animateButtonPress(minusButton)
         // Send updated value to watch for synchronization
-        watchSession.sendCurrentCalorieValue(calorieValue)
+        watchSession.sendCurrentCalorieValue(Int(calorieValue))
     }
     
     // Save the calorie target and transition to the game
