@@ -2,7 +2,7 @@
 //  LoadingWatchView.swift
 //  MomoWatch Watch App
 //
-//  Created by Assistant on Date.
+//  Created by Rafie Amandio on 28/05/25.
 //
 
 import SwiftUI

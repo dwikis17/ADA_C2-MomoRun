@@ -14,6 +14,7 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var gameOver: Bool = false
     @Published var showCalorieSetup: Bool = false
     @Published var currentScreen: String = "mainMenu" // Track current phone screen
+    @Published var currentCalorieValue: Int = 500 // Track current calorie value from phone
     
     override init() {
         super.init()
@@ -57,6 +58,11 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
                 default:
                     break
                 }
+            }
+            
+            // Handle current calorie value synchronization
+            if let currentCalorieValue = message["currentCalorieValue"] as? Int {
+                self.currentCalorieValue = currentCalorieValue
             }
         }
     }
