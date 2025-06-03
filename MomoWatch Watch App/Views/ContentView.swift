@@ -88,6 +88,24 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             WCSession.default.sendMessage(["calorieDirection": direction], replyHandler: nil)
         }
     }
+    
+    func sendFinalSessionCalories(_ calories: Double) {
+        if WCSession.default.isReachable {
+            let calorieData = ["sessionFinalCalories": calories]
+            
+            if WCSession.default.activationState == .activated {
+                let userInfoTransfer = WCSession.default.transferUserInfo(calorieData)
+                print("Queued final session calories for transfer: \(calories)")
+            } else {
+                print("WCSession not activated. Cannot transfer user info.")
+            }
+//            WCSession.default.sendMessage(calorieData, replyHandler: { _ in
+//                print("Successfully sent final session calories (\(calories)) to iPhone.")
+//            }, errorHandler: { error in
+//                print("Error sending final session calories to iPhone: \(error.localizedDescription)")
+//            })
+        }
+    }
 }
 
 struct ContentView: View {
@@ -102,6 +120,7 @@ struct ContentView: View {
     
     private var showCalories: Bool = true
     
+ 
     var body: some View {
         ZStack {
             Image(.momoBG)
@@ -173,6 +192,42 @@ struct ContentView: View {
                 sensorModel.stopFetchingSensorData()
                 gameStarted = false
             }
+        }
+    }
+    
+    private func startSensor(_ start: Bool, _ isFirstStart: Bool = false) {
+        
+        if start && isFirstStart {
+            healthStore.startWorkout()
+        } else {
+            healthStore.resumeSession()
+        }
+        
+        if start  {
+            sensorModel.startFetchingSensorData()
+            healthStore.startCalorieSession()
+            self.caloriesBurned = CalorieData.shared.getTodayCalories()
+            print("Starting fetch...")
+            print("Today calories: \(CalorieData.shared.getTodayCalories())")
+            self.heartRate = 0 // Reset heart rate every start a new fetch
+            
+            if Config.getHealthStoreData {
+                Task {
+                    await healthStore.requestHealthData()
+                    healthStore.startLiveCalorieUpdates { calories in
+                        self.caloriesBurned = calories
+                    }
+                    healthStore.fetchHeartRateLive { rate in
+                        self.heartRate = Int(rate)
+                    }
+                }
+            }
+        } else {
+//            sensorModel.stopFetchingSensorData()
+//            healthStore.stopWorkout()
+            healthStore.stopCalorieSession()
+            healthStore.stopLiveCalorieUpdates()
+            watchSession.sendFinalSessionCalories(self.caloriesBurned)
         }
     }
     

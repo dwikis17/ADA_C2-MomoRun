@@ -8,7 +8,13 @@
 import Foundation
 import SpriteKit
 import WatchConnectivity
+import AVFoundation
 
+enum ObstacleType: String {
+    case jump
+    case crouch
+    case lane
+}
 
 final class GameSceneLab: SKScene {
     struct Tile {
@@ -33,6 +39,10 @@ final class GameSceneLab: SKScene {
     private var restartLabel: SKLabelNode?
     private var boar: SKSpriteNode?
     private var playerZ: Int = 3 // Default ground level
+    private var crashAudioPlayer: AVAudioPlayer?
+    private var runAudioPlayer: AVAudioPlayer?
+    private var bgmAudioNode: SKAudioNode!
+
     
     // Add a property to hold the WatchSessionManager instance
     private var watchSession: WatchSessionManager
@@ -48,24 +58,35 @@ final class GameSceneLab: SKScene {
         fatalError("init(coder:) has not been implemented")
     }
 
-    private func createPlayer() {
-        let playerNode = SKSpriteNode(imageNamed: "run_0") // Start with the first frame
-        let position = Vector(x: -3, y: playerY, z: 3)
-        let screenVector = convertWorldToScreen(position)
-        playerNode.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
-        playerNode.zPosition = CGFloat(convertWorldToZPosition(position))
-        // Adjust anchor point to bottom center
-        playerNode.anchorPoint = CGPoint(x: 0.5, y: 0.6)
-        addChild(playerNode)
-        self.player = playerNode
-
-        let playerFrames: [SKTexture] = (1..<6).map { SKTexture(imageNamed: "run_0\($0)") }
-        let runAnimation = SKAction.animate(with: playerFrames, timePerFrame: 0.1, resize: false, restore: true)
-        let repeatRun = SKAction.repeatForever(runAnimation)
-        playerNode.run(repeatRun, withKey: "run")
+    private func playRunSound() {
+        guard let url = Bundle.main.url(forResource: "run", withExtension: "MP3") else { return }
+        do {
+            runAudioPlayer = try AVAudioPlayer(contentsOf: url)
+            runAudioPlayer?.numberOfLoops = -1 // loop forever
+            runAudioPlayer?.volume = 0.7
+            runAudioPlayer?.play()
+        } catch {
+            print("Failed to play run.mp3: \(error)")
+        }
     }
 
+    private func playCrashSound() {
+        guard let url = Bundle.main.url(forResource: "crash", withExtension: "mp3") else { return }
+        do {
+            crashAudioPlayer = try AVAudioPlayer(contentsOf: url)
+             crashAudioPlayer?.volume = 1.0
+            crashAudioPlayer?.play()
+           
+            print("CRASH")
+        } catch {
+            print("Failed to play crash.mp3: \(error)")
+        }
+    }
 
+    private func stopRunSound() {
+        runAudioPlayer?.stop()
+        runAudioPlayer = nil
+    }
     
     private func setupBackground() {
         let backgroundNode = SKSpriteNode(imageNamed: "background")
@@ -127,7 +148,7 @@ final class GameSceneLab: SKScene {
             x: CGFloat(screenVector.x) + xOffset,
             y: CGFloat(screenVector.y) + yOffset
         )
-        boarNode.zPosition = CGFloat(convertWorldToZPosition(boarPosition))
+        boarNode.zPosition = CGFloat(convertWorldToZPosition(boarPosition)) - 20
         boarNode.setScale(0.8)
         addChild(boarNode)
         self.boar = boarNode
@@ -139,13 +160,35 @@ final class GameSceneLab: SKScene {
         boarNode.run(repeatRun, withKey: "run")
     }
 
+    private func createPlayer() {
+        let playerNode = SKSpriteNode(imageNamed: "run_0") // Start with the first frame
+        let position = Vector(x: -3, y: playerY, z: 3)
+
+        let screenVector = convertWorldToScreen(position)
+        playerNode.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(screenVector.y))
+        playerNode.zPosition = CGFloat(convertWorldToZPosition(position))
+        // Adjust anchor point to bottom center
+        playerNode.anchorPoint = CGPoint(x: 0.5, y: 0.6)
+        addChild(playerNode)
+        self.player = playerNode
+
+        let playerFrames: [SKTexture] = (1..<6).map { SKTexture(imageNamed: "run_0\($0)") }
+        let runAnimation = SKAction.animate(with: playerFrames, timePerFrame: 0.1, resize: false, restore: true)
+        let repeatRun = SKAction.repeatForever(runAnimation)
+        playerNode.run(repeatRun, withKey: "run")
+        playRunSound()
+    }
+
     private func moveLeft() {
         guard playerY < floorWidth - 1 else { return }
         playerY += 1
-        updatePlayerPosition()
+        updatePlayerPosition()   
+         run(SKAction.playSoundFileNamed("jump-crouch.mp3", waitForCompletion: false))
+
+
     }
 
-    private func createObstacles() {
+    private func createRockObstacles() {
         let y = [0, 1, 2].randomElement() ?? 0
         let z = Int(3)
         let obstacle = SKSpriteNode(imageNamed: "rock")
@@ -159,10 +202,103 @@ final class GameSceneLab: SKScene {
         obstacles.append(obstacle)
     }
 
+    private func createCuttedTreeObstacles() {
+        let z = 3
+        for y in 0..<floorWidth {
+            let obstacle = SKSpriteNode(imageNamed: "cutted_tree")
+            let position = Vector(x: obstacleStartX, y: y, z: z)
+            let screenVector = convertWorldToScreen(position)
+            obstacle.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(Double(screenVector.y)))
+            obstacle.zPosition = CGFloat(convertWorldToZPosition(position))
+            obstacle.anchorPoint = CGPoint(x: 0.5, y: y == 0 ? 0.5 : (y == 2 ? 0.0 : 0.3))
+            obstacle.userData = ["worldX": Double(obstacleStartX), "y": y, "z": z]
+            addChild(obstacle)
+            obstacles.append(obstacle)
+        }
+    }
+
+    private func createLogTreeObstacle() {
+        let y = -1
+        let z = Int(3)
+        let obstacle = SKSpriteNode(imageNamed: "log_tree_01")
+        let position = Vector(x: obstacleStartX, y: y, z: z)
+        let screenVector = convertWorldToScreen(position)
+        obstacle.position = CGPoint(x: CGFloat(screenVector.x), y: CGFloat(Double(screenVector.y)))
+        obstacle.zPosition = CGFloat(convertWorldToZPosition(position))
+        obstacle.anchorPoint = CGPoint(x: 0.5, y: y == 0 ? 0.5 : (y == 2 ? 0.0 : 0.3))
+        obstacle.userData = ["worldX": Double(obstacleStartX), "y": y, "z": z]
+        obstacle.setScale(0.8)
+
+        let logBranch = SKSpriteNode(imageNamed: "log_tree_02")
+        let logBranchPosition = Vector(x: obstacleStartX, y: y, z: z)
+        let logBranchScreenVector = convertWorldToScreen(logBranchPosition)
+        logBranch.position = CGPoint(x: CGFloat(logBranchScreenVector.x), y: CGFloat(Double(logBranchScreenVector.y)))
+        logBranch.zPosition = CGFloat(convertWorldToZPosition(logBranchPosition))
+        logBranch.anchorPoint = CGPoint(x: 0.5, y: -0.25)
+        logBranch.userData = ["worldX": Double(obstacleStartX), "y": y, "z": z]
+        logBranch.setScale(0.8)
+    
+        let secondLogBranch = SKSpriteNode(imageNamed: "log_tree_02")
+        let secondLogBranchPosition = Vector(x: obstacleStartX, y: y, z: z)
+        let secondLogBranchScreenVector = convertWorldToScreen(secondLogBranchPosition)
+        secondLogBranch.position = CGPoint(x: CGFloat(secondLogBranchScreenVector.x), y: CGFloat(Double(secondLogBranchScreenVector.y)))
+        secondLogBranch.zPosition = CGFloat(convertWorldToZPosition(secondLogBranchPosition))
+        secondLogBranch.anchorPoint = CGPoint(x: 0.5, y: -0.50)
+        secondLogBranch.userData = ["worldX": Double(obstacleStartX), "y": y, "z": z]
+        secondLogBranch.setScale(0.8)
+
+        let branch = SKSpriteNode(imageNamed: "branch_01")
+        let branchPosition = Vector(x: obstacleStartX, y: 0, z: z)
+        let branchScreenVector = convertWorldToScreen(branchPosition)
+        branch.position = CGPoint(x: CGFloat(branchScreenVector.x), y: CGFloat(Double(branchScreenVector.y)))
+        branch.zPosition = CGFloat(convertWorldToZPosition(branchPosition)) 
+        branch.anchorPoint = CGPoint(x: 0.4, y: -0.50)
+        branch.userData = ["worldX": Double(obstacleStartX), "y": 0, "z": z]
+        branch.setScale(0.8)
+
+        let branch2 = SKSpriteNode(imageNamed: "branch_02")
+        let branch2Position = Vector(x: obstacleStartX, y: 1, z: z)
+        let branch2ScreenVector = convertWorldToScreen(branch2Position)
+        branch2.position = CGPoint(x: CGFloat(branch2ScreenVector.x), y: CGFloat(Double(branch2ScreenVector.y)))
+        branch2.zPosition = CGFloat(convertWorldToZPosition(branch2Position)) 
+        branch2.anchorPoint = CGPoint(x: 0.5, y: -0.24)
+        branch2.userData = ["worldX": Double(obstacleStartX), "y": 1, "z": z]
+
+        let branch3 = SKSpriteNode(imageNamed: "branch_02")
+        let branch3Position = Vector(x: obstacleStartX, y: 2, z: z)
+        let branch3ScreenVector = convertWorldToScreen(branch3Position)
+        branch3.position = CGPoint(x: CGFloat(branch3ScreenVector.x), y: CGFloat(Double(branch3ScreenVector.y)))
+        branch3.zPosition = CGFloat(convertWorldToZPosition(branch3Position))   
+        branch3.anchorPoint = CGPoint(x: 1.65, y: -0.6)
+        branch3.userData = ["worldX": Double(obstacleStartX), "y": 2, "z": z]
+        branch3.alpha = 0
+
+     
+
+
+        addChild(branch)
+        addChild(branch2)
+          addChild(branch3)
+        addChild(obstacle)
+        addChild(logBranch)
+        addChild(secondLogBranch)
+       
+
+        obstacles.append(obstacle)
+        obstacles.append(logBranch)
+        obstacles.append(secondLogBranch)
+        obstacles.append(branch)
+        obstacles.append(branch2)
+        obstacles.append(branch3)
+    }
+
+
     private func moveRight() {
         guard playerY > 0 else { return }
         playerY -= 1
         updatePlayerPosition()
+        run(SKAction.playSoundFileNamed("jump-crouch.mp3", waitForCompletion: false))
+
     }
 
     private func updatePlayerPosition() {
@@ -263,6 +399,15 @@ final class GameSceneLab: SKScene {
         watchSession.onGoToCalorieSetup = { [weak self] in
             self?.goToCalorieSetup()
         }
+        UIApplication.shared.isIdleTimerDisabled = true
+
+        if let bgmURL = Bundle.main.url(forResource: "bgm", withExtension: "mp3") {
+            bgmAudioNode = SKAudioNode(url: bgmURL)
+            bgmAudioNode.autoplayLooped = true
+            bgmAudioNode.run(SKAction.changeVolume(to: 0.3, duration: 0)) // Set volume to 30%
+            addChild(bgmAudioNode)
+        }
+
     }
     
     // Helper for smooth isometric rendering (uses Double for x)
@@ -287,7 +432,7 @@ final class GameSceneLab: SKScene {
         obstacles.removeAll()
         // Reset player position
         playerY = 1
-        // updatePlayerPosition()
+         updatePlayerPosition()
         // Reset timers and state
         obstacleSpawnTimer = 0
         isGameOver = false
@@ -295,6 +440,7 @@ final class GameSceneLab: SKScene {
         restartLabel?.removeFromParent()
         restartLabel = nil
         lastUpdateTime = 0
+        playRunSound()
         
         // Notify watch that we're back in game
         watchSession.sendScreenChange("game")
@@ -384,6 +530,8 @@ final class GameSceneLab: SKScene {
             // Collision check: player is always at (-3, playerY, 3)
             if Int(round(newWorldX)) == -3 && y == playerY && z == 3 && playerZ == 3 {
                 didCollide = true
+                playCrashSound()
+                stopRunSound()
             }
         }
         // Remove obstacles that are off screen
@@ -395,9 +543,32 @@ final class GameSceneLab: SKScene {
         }
         // Spawn new obstacles at random intervals
         obstacleSpawnTimer += deltaTime
-        if obstacleSpawnTimer >= obstacleSpawnInterval {
-            obstacleSpawnTimer = 0
-            createObstacles()
+        if obstacleSpawnTimer >= obstacleSpawnInterval && Config.showObstacle {
+            obstacleSpawnTimer = 0  
+            // Weighted random choice to make rocks appear more often
+            let weights = [0.5, 0.25, 0.25] // 50% rocks, 25% cut trees, 25% logs
+            let random = Double.random(in: 0..<1)
+            var cumulativeWeight = 0.0
+            var choice = 0
+            
+            for (index, weight) in weights.enumerated() {
+                cumulativeWeight += weight
+                if random < cumulativeWeight {
+                    choice = index
+                    break
+                }
+            }
+            
+            switch choice {
+            case 0:
+                createRockObstacles()
+            case 1:
+                createCuttedTreeObstacles()
+            case 2:
+                createLogTreeObstacle()
+            default:
+                break
+            }
         }
         // If collision, stop the game and tint player red
         if didCollide {
@@ -433,29 +604,15 @@ final class GameSceneLab: SKScene {
         }
     } 
 
-    // Add public methods for watch control
-    @objc func moveLeftFromWatch() {
-        moveLeft()
-    }
-    @objc func moveRightFromWatch() {
-        moveRight()
-    }
-
-    @objc func jumpFromWatch() {
-        receiveJumpSignal()
-    }
-
-    @objc func crouchFromWatch() {
-        receiveCrouchSignal()
-    }
 
    private func receiveJumpSignal() {
     guard let playerNode = player else { return }
+    stopRunSound()
     playerNode.removeAction(forKey: "run")
     let jumpFrames: [SKTexture] = (1..<9).map { SKTexture(imageNamed: "jump_0\($0)") }
     let jumpAction = SKAction.animate(with: jumpFrames, timePerFrame: 0.08, resize: false, restore: true)
     let jumpHeight: CGFloat = 10
-    let jumpDuration: TimeInterval = 0.2
+    let jumpDuration: TimeInterval = 0.3
     let moveUp = SKAction.moveBy(x: 0, y: jumpHeight, duration: jumpDuration)
     moveUp.timingMode = .easeOut
     let moveDown = SKAction.moveBy(x: 0, y: -jumpHeight, duration: jumpDuration)
@@ -470,22 +627,34 @@ final class GameSceneLab: SKScene {
     let runFrames: [SKTexture] = (1..<6).map { SKTexture(imageNamed: "run_0\($0)") }
     let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
     let repeatRun = SKAction.repeatForever(runAnimation)
-    let sequence = SKAction.sequence([group, repeatRun])
+    let playRunSoundAction = SKAction.run { [weak self] in self?.playRunSound() }
+    let sequence = SKAction.sequence([group, playRunSoundAction, repeatRun])
     playerNode.run(sequence, withKey: "run")
+    // Play sound when jumping
+    run(SKAction.playSoundFileNamed("jump-crouch.mp3", waitForCompletion: false))
     }
 
     private func receiveCrouchSignal() {
          guard let playerNode = player else { return }
+        stopRunSound()
         // Stop current animation
         playerNode.removeAction(forKey: "run")
-        // Prepare jump frames
+        // Prepare crouch frames
         let crouchFrames: [SKTexture] = (1..<10).map { SKTexture(imageNamed: "roll_0\($0)") }
         let crouchAction = SKAction.animate(with: crouchFrames, timePerFrame: 0.08, resize: false, restore: true)
-        // After jump, resume running
+        // Animate z: set to 2 during crouch, then back to 3
+        let setZDown = SKAction.run { [weak self] in self?.playerZ = 2 }
+        let setZUp = SKAction.run { [weak self] in self?.playerZ = 3 }
+        let zSequence = SKAction.sequence([setZDown, SKAction.wait(forDuration: 0.08 * Double(crouchFrames.count)), setZUp])
+        // After crouch, resume running
         let runFrames: [SKTexture] = (1..<6).map { SKTexture(imageNamed: "run_0\($0)") }
         let runAnimation = SKAction.animate(with: runFrames, timePerFrame: 0.1, resize: false, restore: true)
         let repeatRun = SKAction.repeatForever(runAnimation)
-        let sequence = SKAction.sequence([crouchAction, repeatRun])
+        let group = SKAction.group([crouchAction, zSequence])
+        let playRunSoundAction = SKAction.run { [weak self] in self?.playRunSound() }
+        let sequence = SKAction.sequence([group, playRunSoundAction, repeatRun])
         playerNode.run(sequence, withKey: "run")
+        // Play sound when crouching
+        run(SKAction.playSoundFileNamed("jump-crouch.mp3", waitForCompletion: false))
     }
 }

@@ -3,18 +3,18 @@ import Foundation
 class CalorieData: ObservableObject {
     // Singleton instance for easy access
     static let shared = CalorieData()
-    
+
     // Keys for UserDefaults
     private let targetKey = "dailyCaloriesTarget"
     private let todayKey = "todayCalories"
     private let dateKey = "lastCaloriesDate"
     
     // Published properties that trigger updates
-    @Published var dailyTarget: Int {
+    @Published var dailyTarget: Double {
         didSet { save() }
     }
     
-    @Published var todayCalories: Int {
+    @Published var todayCalories: Double {
         didSet { save() }
     }
     
@@ -25,8 +25,8 @@ class CalorieData: ObservableObject {
     private init() {
         // Load values from UserDefaults
         let defaults = UserDefaults.standard
-        self.dailyTarget = defaults.integer(forKey: targetKey)
-        self.todayCalories = defaults.integer(forKey: todayKey)
+        self.dailyTarget = defaults.double(forKey: targetKey)
+        self.todayCalories = defaults.double(forKey: todayKey)
         self.lastUpdated = defaults.object(forKey: dateKey) as? Date ?? Date()
         checkDateReset()
     }
@@ -34,6 +34,7 @@ class CalorieData: ObservableObject {
     // Save data to UserDefaults
     func save() {
         let defaults = UserDefaults.standard
+        print("saved")
         defaults.set(dailyTarget, forKey: targetKey)
         defaults.set(todayCalories, forKey: todayKey)
         defaults.set(lastUpdated, forKey: dateKey)
@@ -49,13 +50,22 @@ class CalorieData: ObservableObject {
     }
     
     // Add calories (e.g., after completing a game)
-    func addCalories(_ amount: Int) {
+    func addCalories(_ amount: Double) {
+        let addedCalories = todayCalories + amount
         checkDateReset()
-        todayCalories += amount
+        todayCalories  = addedCalories
+        print(addedCalories)
+    
+    }
+    
+    // Return todays' target
+    func getTodayCalories() -> Double {
+        print("Todays calorie data: \(todayCalories)")
+        return todayCalories
     }
     
     // Set the daily target
-    func setTarget(_ target: Int) {
+    func setTarget(_ target: Double) {
         dailyTarget = target
     }
     
