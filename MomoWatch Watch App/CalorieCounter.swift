@@ -26,9 +26,17 @@ class HealthStore: ObservableObject {
             fatalError("CANNOT RESUME")
         
         }
-        self.healthStore.resumeWorkoutSession(workoutSession)
+        self.workoutSession?.resume()
+    
     }
     
+    
+    public func pauseSession() {
+        guard let workoutSession = workoutSession else {
+            fatalError("CANNOT PAUSE")
+        }
+        self.workoutSession?.pause()
+    }
     // MARK: WORKOUT SESSION ============================================================
     
     func startWorkout() {
@@ -55,7 +63,8 @@ class HealthStore: ObservableObject {
         workoutSession?.end()
         workoutBuilder?.endCollection(withEnd: Date(), completion: {_,_ in })
         workoutSession = nil
-        workoutBuilder = nil        
+        workoutBuilder = nil
+        print("Workout session ended")
     }
     
     // MARK: AUTHORIZATION ============================================================

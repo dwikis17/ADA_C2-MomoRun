@@ -34,7 +34,7 @@ class CalorieData: ObservableObject {
     // Save data to UserDefaults
     func save() {
         let defaults = UserDefaults.standard
-        print("saved")
+        print("saved bang")
         defaults.set(dailyTarget, forKey: targetKey)
         defaults.set(todayCalories, forKey: todayKey)
         defaults.set(lastUpdated, forKey: dateKey)
@@ -54,7 +54,8 @@ class CalorieData: ObservableObject {
         let addedCalories = todayCalories + amount
         checkDateReset()
         todayCalories  = addedCalories
-        print(addedCalories)
+        
+        print("addedCalories from calorieData \(addedCalories)")
     
     }
     

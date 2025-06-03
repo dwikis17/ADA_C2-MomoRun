@@ -15,7 +15,8 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var finalSessionCaloriesFromWatch: Double?
     
     var onDirection: ((String) -> Void)?
-    var onRestart: (() -> Void)?
+    var onRestart: ((Double) -> Void)?
+    var onCalorieChange: ((Double) -> Void)?
     var onStart: (() -> Void)?
     var onFinalSessionCaloriesReceived: ((Double) -> Void)?
     
@@ -39,8 +40,8 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         // Handle activation completion if needed
         DispatchQueue.main.async {
             self.isReachable = (activationState == .activated && session.isReachable)
+            print("iPhone WCSession activation did complete with state: \(activationState.rawValue), isReachable: \(session.isReachable)")
         }
-        print("WCSession activation did complete with state: \(activationState.rawValue)")
 //        self.isReachable = session.isReachable
         if let error = error {
             print("WCSession activation error: \(error.localizedDescription)")
@@ -61,28 +62,31 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
         DispatchQueue.main.async {
-            print("HERE")
-            print("received user info | \(userInfo)")
-            if let finalCalories = userInfo["sessionFinalCalories"] as? Double {
-                print("Received final session calories from Watch: \(finalCalories)")
-                CalorieData.shared.addCalories(finalCalories)
-                self.onFinalSessionCaloriesReceived?(finalCalories)
+            print("HERE - iPhone: Received user info | \(userInfo)") // Your existing log
+            if let finalCalories = userInfo["sessionFinalCalories"] as? String {
+                print("iPhone: Received final session calories from Watch: \(finalCalories)")
+//                 CalorieData.shared.addCalories(finalCalories)
+//                 self.onFinalSessionCaloriesReceived?(finalCalories)
+            } else {
+                print("iPhone: User info did not contain 'sessionFinalCalories' or it was not a Double.")
             }
         }
     }
 
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         DispatchQueue.main.async {
+            print(message)
             if let info = message["info"] as? String {
                 self.receivedMessage = info
                 print("Received info: \(info)")
             }
             if let direction = message["direction"] as? String {
                 self.onDirection?(direction)
+                print("message from direction \(message)")
                 print("Received direction: \(direction)")
             }
             if let restart = message["restart"] as? Bool, restart {
-                self.onRestart?()
+                self.onRestart?(6.9)
                 print("Received restart command")
             }
             if let start = message["start"] as? Bool, start {
@@ -106,11 +110,12 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
                 print("Received screen change: \(screenType)")
             }
             
-//            if let finalCalories = message["sessionFinalCalories"] as? Double {
-//                print("Received final session calories from Watch: \(finalCalories)")
-//                CalorieData.shared.addCalories(finalCalories)
-//                self.onFinalSessionCaloriesReceived?(finalCalories)
-//            }
+            if let finalCalories = message["calories"] as? Double {
+                print("HERE")
+                print("Received final session calories from Watch: \(finalCalories)")
+                CalorieData.shared.addCalories(finalCalories)
+                self.onFinalSessionCaloriesReceived?(finalCalories)
+            }
         }
     }
     

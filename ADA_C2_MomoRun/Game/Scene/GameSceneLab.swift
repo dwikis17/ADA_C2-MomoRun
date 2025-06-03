@@ -391,9 +391,10 @@ final class GameSceneLab: SKScene {
                 self.receiveCrouchSignal()
             }
         }
-        watchSession.onRestart = { [weak self] in
-            self?.restartGame()
+        watchSession.onRestart = { [weak self] calories in
+            self?.restartGame(calories: calories)
         }
+        
         UIApplication.shared.isIdleTimerDisabled = true
 
         if let bgmURL = Bundle.main.url(forResource: "bgm", withExtension: "mp3") {
@@ -421,7 +422,9 @@ final class GameSceneLab: SKScene {
         }
     }
     
-     func restartGame() {
+    func restartGame(calories:Double?) {
+        print("printed calories \(calories!)")
+
         // Remove all obstacles
         for obstacle in obstacles { obstacle.removeFromParent() }
         obstacles.removeAll()
@@ -439,6 +442,8 @@ final class GameSceneLab: SKScene {
         
         // Notify watch that we're back in game
         watchSession.sendScreenChange("game")
+         
+
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -575,7 +580,7 @@ final class GameSceneLab: SKScene {
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if isGameOver {
-            restartGame()
+            restartGame(calories: 6.4)
             return
         }
         guard let touch = touches.first else { return }

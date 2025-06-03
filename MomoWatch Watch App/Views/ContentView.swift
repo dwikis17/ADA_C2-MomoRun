@@ -5,6 +5,7 @@
 //  Created by Dwiki on 20/05/25.
 //
 
+import Foundation
 import SwiftUI
 import WatchConnectivity
 import WatchKit
@@ -22,7 +23,19 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
             WCSession.default.activate()
         }
     }
+    
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {}
+    
+    func session(_ session: WCSession, didFinish userInfoTransfer: WCSessionUserInfoTransfer, error: Error?) {
+        if let error = error {
+            print("Watch: Error finishing UserInfo transfer: \(error.localizedDescription). UserInfo: \(userInfoTransfer.userInfo)")
+        } else {
+            // This confirms the system has processed the send request.
+            // It doesn't guarantee the iPhone has received it yet, but it's a successful handoff from the Watch's perspective.
+            print("Watch: UserInfo transfer finished successfully (system acknowledged). UserInfo: \(userInfoTransfer.userInfo)")
+        }
+    }
+    
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
         DispatchQueue.main.async {
             if let info = message["info"] as? String {
@@ -83,21 +96,32 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         }
     }
     
-    func sendFinalSessionCalories(_ calories: Double) {
-        if WCSession.default.isReachable {
+//    func sendFinalSessionCalories(_ calories: String) {
+//        if WCSession.default.isReachable {
+//            WCSession.default.sendMessage(["sessionFinalCalories": calories], replyHandler: nil)
+//        }
+//    }
+    
+    func sendFinalSessionCalories(_ calories: String) {
+        let session = WCSession.default
+        print("Watch Session State: activated=\(session.activationState.rawValue), reachable=\(session.isReachable)")
+        
+        if session.isReachable {
             let calorieData = ["sessionFinalCalories": calories]
-            
-            if WCSession.default.activationState == .activated {
-                let userInfoTransfer = WCSession.default.transferUserInfo(calorieData)
-                print("Queued final session calories for transfer: \(calories)")
-            } else {
-                print("WCSession not activated. Cannot transfer user info.")
-            }
-//            WCSession.default.sendMessage(calorieData, replyHandler: { _ in
-//                print("Successfully sent final session calories (\(calories)) to iPhone.")
-//            }, errorHandler: { error in
-//                print("Error sending final session calories to iPhone: \(error.localizedDescription)")
-//            })
+
+//            if session.activationState == .activated {
+//                let userInfoTransfer = session.transferUserInfo(calorieData)
+//                print("Queued final session calories for transfer: \(calories) with identifier \(userInfoTransfer)")
+//            } else {
+//                print("WCSession not activated on Watch. Cannot transfer user info.")
+//            }
+            session.sendMessage(calorieData, replyHandler: { _ in
+                print("Successfully sent final session calories (\(calories)) to iPhone.")
+            }, errorHandler: { error in
+                print("Error sending final session calories to iPhone: \(error.localizedDescription)")
+            })
+        } else {
+            print("Watch is not reachable. can't send calories.")
         }
     }
 }
@@ -225,14 +249,19 @@ struct ContentView: View {
                     
                     Button(action : {
                         startSensor(true)
-                        watchSession.gameOver = false
-                        watchSession.status = ""
+//                        watchSession.gameOver = false
+//                        watchSession.status = ""
                         didPlayHaptic = false
 //                        sensorModel.startFetchingSensorData()
                         if WCSession.default.isReachable {
-                            WCSession.default.sendMessage(["restart": true], replyHandler: nil)
+                            WCSession.default.sendMessage(["restart": true], replyHandler: nil) { err in
+                                print("this is restart error \(err.localizedDescription)")
+                            }
                             // Immediately start the game after retry
                             WCSession.default.sendMessage(["start": true], replyHandler: nil)
+                            WCSession.default.sendMessage(["calories" : self.caloriesBurned],replyHandler: nil, errorHandler: { error in
+                                print("HERE- Error sending final session calories to iPhone: \(error.localizedDescription)")
+                            })
                             gameStarted = true
                         }
                     }) {
@@ -312,7 +341,7 @@ struct ContentView: View {
         
         if start && isFirstStart {
             healthStore.startWorkout()
-        } else {
+        } else  if start {
             healthStore.resumeSession()
         }
         
@@ -336,11 +365,11 @@ struct ContentView: View {
                 }
             }
         } else {
-//            sensorModel.stopFetchingSensorData()
-//            healthStore.stopWorkout()
+            sensorModel.stopFetchingSensorData()
+            healthStore.pauseSession()
             healthStore.stopCalorieSession()
             healthStore.stopLiveCalorieUpdates()
-            watchSession.sendFinalSessionCalories(self.caloriesBurned)
+            watchSession.sendFinalSessionCalories("\(self.caloriesBurned)")
         }
     }
     
