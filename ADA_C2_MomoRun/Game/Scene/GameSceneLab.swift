@@ -394,6 +394,11 @@ final class GameSceneLab: SKScene {
         watchSession.onRestart = { [weak self] in
             self?.restartGame()
         }
+        
+        // Set up watch session go to calorie setup handler
+        watchSession.onGoToCalorieSetup = { [weak self] in
+            self?.goToCalorieSetup()
+        }
         UIApplication.shared.isIdleTimerDisabled = true
 
         if let bgmURL = Bundle.main.url(forResource: "bgm", withExtension: "mp3") {
@@ -439,6 +444,19 @@ final class GameSceneLab: SKScene {
         
         // Notify watch that we're back in game
         watchSession.sendScreenChange("game")
+    }
+
+    private func goToCalorieSetup() {
+        // Navigate to calorie setup scene from game
+        let calorieSetupScene = SetCaloriesScene(size: size, watchSession: watchSession)
+        calorieSetupScene.scaleMode = scaleMode
+        let transition = SKTransition.fade(withDuration: 0.5)
+        
+        // Tell the watch to show calorie setup UI
+        watchSession.sendShowCalorieSetup()
+        watchSession.sendScreenChange("calorieSetup")
+        
+        view?.presentScene(calorieSetupScene, transition: transition)
     }
 
     override func update(_ currentTime: TimeInterval) {

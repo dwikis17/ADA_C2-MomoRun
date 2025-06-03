@@ -26,6 +26,12 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
     // New callbacks for screen synchronization
     var onScreenChange: ((String) -> Void)?
 
+    // New callback for go to calorie setup
+    var onGoToCalorieSetup: (() -> Void)?
+
+    // New callback for receiving current calorie value
+    var onCurrentCalorieValue: ((Int) -> Void)?
+
     override init() {
         super.init()
         if WCSession.isSupported() {
@@ -100,10 +106,22 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
                 print("Received calorie done command")
             }
             
+            // Handle go to calorie setup message from watch
+            if let goToCalorieSetup = message["goToCalorieSetup"] as? Bool, goToCalorieSetup {
+                self.onGoToCalorieSetup?()
+                print("Received go to calorie setup command")
+            }
+            
             // Handle screen synchronization messages
             if let screenType = message["screenType"] as? String {
                 self.onScreenChange?(screenType)
                 print("Received screen change: \(screenType)")
+            }
+            
+            // Handle current calorie value from phone
+            if let currentCalorieValue = message["currentCalorieValue"] as? Int {
+                self.onCurrentCalorieValue?(currentCalorieValue)
+                print("Received current calorie value: \(currentCalorieValue)")
             }
             
 //            if let finalCalories = message["sessionFinalCalories"] as? Double {
@@ -151,6 +169,20 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         WCSession.default.sendMessage(["screenType": screenType], replyHandler: nil) { error in
             if error != nil {
                 print("Error sending screen change: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    // Function to send current calorie value to watch
+    func sendCurrentCalorieValue(_ value: Int) {
+        guard WCSession.default.isReachable else {
+            print("Watch is not reachable.")
+            return
+        }
+        
+        WCSession.default.sendMessage(["currentCalorieValue": value], replyHandler: nil) { error in
+            if error != nil {
+                print("Error sending current calorie value: \(error.localizedDescription)")
             }
         }
     }
