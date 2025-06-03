@@ -15,6 +15,7 @@ struct GameOverWatchView: View {
     @Binding var gameStarted: Bool
     let caloriesBurned: Double
     let heartRate: Int
+    var startSensorFunc: () -> Void
     
     var body: some View {
         VStack(spacing: 15) {
@@ -38,10 +39,12 @@ struct GameOverWatchView: View {
                 watchSession.gameOver = false
                 watchSession.status = ""
                 didPlayHaptic = false
-                sensorModel.startFetchingSensorData()
+//                sensorModel.startFetchingSensorData()
+                startSensorFunc()
                 if WCSession.default.isReachable {
                     WCSession.default.sendMessage(["restart": true], replyHandler: nil)
                     // Immediately start the game after retry
+                    WCSession.default.sendMessage(["calories": self.caloriesBurned], replyHandler: nil)
                     WCSession.default.sendMessage(["start": true], replyHandler: nil)
                     gameStarted = true
                 }
@@ -63,6 +66,7 @@ struct GameOverWatchView: View {
         didPlayHaptic: .constant(false),
         gameStarted: .constant(false),
         caloriesBurned: 125.5,
-        heartRate: 85
+        heartRate: 85,
+        startSensorFunc: {}
     )
 }

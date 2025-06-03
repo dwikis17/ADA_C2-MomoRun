@@ -54,7 +54,7 @@ class CalorieData: ObservableObject {
         let addedCalories = todayCalories + amount
         checkDateReset()
         todayCalories  = addedCalories
-        print(addedCalories)
+        print("addedCalories: \(addedCalories)")
     
     }
     

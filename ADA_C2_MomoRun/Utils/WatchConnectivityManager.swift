@@ -124,11 +124,11 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
                 print("Received current calorie value: \(currentCalorieValue)")
             }
             
-//            if let finalCalories = message["sessionFinalCalories"] as? Double {
-//                print("Received final session calories from Watch: \(finalCalories)")
-//                CalorieData.shared.addCalories(finalCalories)
-//                self.onFinalSessionCaloriesReceived?(finalCalories)
-//            }
+            if let finalCalories = message["calories"] as? Double {
+                print("Received final session calories from Watch: \(finalCalories)")
+                CalorieData.shared.addCalories(finalCalories)
+                self.onFinalSessionCaloriesReceived?(finalCalories)
+            }
         }
     }
     

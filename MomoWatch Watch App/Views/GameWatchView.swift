@@ -12,6 +12,7 @@ struct GameWatchView: View {
     @ObservedObject var healthStore: HealthStore
     @Binding var caloriesBurned: Double
     @Binding var heartRate: Int
+    var startSensorFunc: () -> Void
     
     var body: some View {
         VStack(spacing: 10) {
@@ -69,6 +70,7 @@ struct GameWatchView: View {
         sensorModel: SensorModel(),
         healthStore: HealthStore(),
         caloriesBurned: .constant(0.0),
-        heartRate: .constant(0)
+        heartRate: .constant(0),
+        startSensorFunc: {},
     )
 } 

@@ -93,17 +93,17 @@ class WatchSessionManager: NSObject, ObservableObject, WCSessionDelegate {
         if WCSession.default.isReachable {
             let calorieData = ["sessionFinalCalories": calories]
             
-            if WCSession.default.activationState == .activated {
-                let userInfoTransfer = WCSession.default.transferUserInfo(calorieData)
-                print("Queued final session calories for transfer: \(calories)")
-            } else {
-                print("WCSession not activated. Cannot transfer user info.")
-            }
-//            WCSession.default.sendMessage(calorieData, replyHandler: { _ in
-//                print("Successfully sent final session calories (\(calories)) to iPhone.")
-//            }, errorHandler: { error in
-//                print("Error sending final session calories to iPhone: \(error.localizedDescription)")
-//            })
+//            if WCSession.default.activationState == .activated {
+//                let userInfoTransfer = WCSession.default.transferUserInfo(calorieData)
+//                print("Queued final session calories for transfer: \(calories)")
+//            } else {
+//                print("WCSession not activated. Cannot transfer user info.")
+//            }
+            WCSession.default.sendMessage(calorieData, replyHandler: { _ in
+                print("Successfully sent final session calories (\(calories)) to iPhone.")
+            }, errorHandler: { error in
+                print("Error sending final session calories to iPhone: \(error.localizedDescription)")
+            })
         }
     }
 }
@@ -150,16 +150,18 @@ struct ContentView: View {
                     didPlayHaptic: $didPlayHaptic,
                     gameStarted: $gameStarted,
                     caloriesBurned: caloriesBurned,
-                    heartRate: heartRate
-                )
+                    heartRate: heartRate) {
+                        startSensor(false)
+                    }
                 
             case "game":
                 GameWatchView(
                     sensorModel: sensorModel,
                     healthStore: healthStore,
                     caloriesBurned: $caloriesBurned,
-                    heartRate: $heartRate
-                )
+                    heartRate: $heartRate) {
+                        startSensor(true)
+                    }
                 
             default:
                 // Fallback view
@@ -223,8 +225,8 @@ struct ContentView: View {
                 }
             }
         } else {
-//            sensorModel.stopFetchingSensorData()
-//            healthStore.stopWorkout()
+            sensorModel.stopFetchingSensorData()
+            healthStore.stopWorkout()
             healthStore.stopCalorieSession()
             healthStore.stopLiveCalorieUpdates()
             watchSession.sendFinalSessionCalories(self.caloriesBurned)
